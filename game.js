@@ -44,7 +44,7 @@ const STAYS = [
     blurb:"Het woestijnkamp van Riad Madu bij Hassilabied. Acht Berbertenten tussen de duinen, elk met een king-, queen- of twinbed en een eigen terrasje, ongeveer een uur per kameel vanaf de riad.",
     when:"Inchecken 14:00–16:30, zodat je bij zonsondergang in het zand zit.",
     tip:"Rij naar het dorpje Khamlia, ten zuiden van Merzouga. De families daar stammen af van West-Afrikanen en spelen Gnawa-muziek: trommels, ijzeren castagnetten en zang. Je zit bij een glas thee en luistert mee." },
-  { id:"ouarzazate", place:"Ouarzazate", stay:"La Terrasse des Délices", nights:"Nacht 7", n:1, gq:"La Terrasse des Délices, Oasis de Fint, Ouarzazate", z:15.4, lat:30.918317, lng:-6.963771,
+  { id:"ouarzazate", place:"Ouarzazate", stay:"La Terrasse des Délices", nights:"Nacht 7", n:1, gurl:"https://maps.google.com/maps?q=La+Terrasse+des+d%C3%A9lices,+Fint,+Marokko&ftid=0xdbb050016a1e55d:0xa0e1e385ae2690bb", z:15.4, lat:30.82296, lng:-6.94911,
     photos:["s_ouarz"], credit:"Foto ter illustratie: de oase van Fint · Fraguando, CC BY-SA 4.0",
     blurb:"Een auberge in Douar Taharbilte in de oase van Fint, 12 km buiten Ouarzazate. Kleine terrassen en salons, een zwembad en een panoramaterras boven de palmen. De keuken kookt traditionele gerechten uit Zuid-Marokko.",
     when:"Diner op het panoramaterras.",
