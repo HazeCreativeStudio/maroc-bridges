@@ -211,3 +211,11 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .pick-grid.many{gap:6px 4px;max-width:400px}.pick-grid.many .pick-card{width:60px;gap:2px}.pick-grid.many .pick-card .av{width:48px;height:48px;border-width:2.5px;box-shadow:0 3px 0 var(--ink-2)}.pick-grid.many .pick-card > span{font-size:11px}
 #pick:has(.pick-grid.many) .pick-name b{font-size:36px}
 #pick:has(.pick-grid.many) .pick-bottom{gap:9px}
+
+/* sound toggle */
+.sound{position:fixed;right:10px;top:calc(var(--safe-t) + 12px);z-index:25;width:40px;height:40px;border-width:2.5px}
+.sound svg{width:21px;height:21px}
+.sound .off{display:none} .sound.muted .off{display:inline} .sound.muted .on{display:none}
+.sound.muted{background:#e9dccb}
+.loc-top{padding-right:70px}
+#banner{max-width:calc(100vw - 132px)}

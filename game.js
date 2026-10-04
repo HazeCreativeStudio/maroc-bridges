@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from './lib/RoundedBoxGeometry.js';
 import {RoomEnvironment} from './lib/RoomEnvironment.js';
+import {Sound} from './audio.js';
 
 /* =====================================================================
    MAROC BRIDGES: the game
@@ -919,7 +920,8 @@ async function backToMap(fromLoc=true){
 
 /* ---------- player choice ---------- */
 function refreshPlayer(){ if(!player) return; const b=$('#player'); b.querySelector('img').src=PORTRAITS[player.id]; b.querySelector('span').textContent=player.name; b.style.setProperty('--c',shade(player.robe,.32)); }
-function choosePlayer(id){
+function choosePlayer(id, quiet){
+  if(!quiet) Sound.sfx('pick');
   player=CHARACTERS.find(c=>c.id===id)||CHARACTERS[0]; try{ localStorage.setItem('mb_player',player.id); }catch(_){}
   document.querySelectorAll('.pick-card').forEach(el=>el.classList.toggle('on',el.dataset.id===player.id));
   const n=$('#pickName'); n.textContent=player.name; n.style.animation='none'; void n.offsetWidth; n.style.animation='';
@@ -932,10 +934,10 @@ function buildPicker(){
   g.innerHTML=CHARACTERS.map(c=>`<button class="pick-card" data-id="${c.id}" style="--c:${shade(c.robe,.3)}"><i class="av"><img src="${PORTRAITS[c.id]}" alt=""></i><span>${c.name}</span></button>`).join('');
   g.querySelectorAll('.pick-card').forEach(b=>b.addEventListener('click',()=>choosePlayer(b.dataset.id)));
   let saved=null; try{ saved=localStorage.getItem('mb_player'); }catch(_){}
-  choosePlayer(saved||CHARACTERS[0].id);
+  choosePlayer(saved||CHARACTERS[0].id, true);
 }
 async function startFromPick(){
-  if(busy||mode!=='pick') return; busy=true;
+  if(busy||mode!=='pick') return; busy=true; Sound.sfx('start');
   await iris(true); $('#pick').hidden=true; refreshPlayer();
   intro.charSlot.clear(); intro.charModel=buildCharacter(player); intro.charSlot.add(intro.charModel);
   if(!state.introDone){ mode='intro'; activeScene=intro.scene; intro.t=0; $('#intro').hidden=false; busy=false; await iris(false); return; }
@@ -951,7 +953,7 @@ async function backToPick(){
 
 /* start: fly from the Netherlands */
 async function startJourney(){
-  if(busy) return; busy=true; showHud(false); $('#labels').hidden=false;
+  if(busy) return; busy=true; Sound.sfx('start'); showHud(false); $('#labels').hidden=false;
   state.started=true; state.cur=0; refreshLabelState();
   const o=ovr();
   // go to the Netherlands
@@ -987,7 +989,7 @@ async function arrive(i){
   // dive to the landmark, then open the street map
   state.cur=i; refreshLabelState();
   const c=closeView(i,2.0); await camTo(c.pos,c.T,1.4,.3);
-  confetti(40);
+  confetti(40); Sound.sfx('arrive');
   await wait(350);
   await openLoc(i);
   busy=false;
@@ -1002,7 +1004,7 @@ async function jumpTo(i){
 
 /* drive the van to the next stay */
 async function driveNext(){
-  if(busy) return; busy=true;
+  if(busy) return; busy=true; Sound.yallah();
   const from=state.cur; const last=from===STAYS.length-1; const to=last?0:from+1;
   const legId=last?'home':STAYS[to].id; const leg=LEGS[legId];
   await iris(true);
@@ -1035,7 +1037,7 @@ async function homeFlight(){
   world.van.visible=false;
   banner('Dag 8 · Vlucht','Marrakech → Amsterdam','Tot de volgende keer, Marokko!');
   await flight(lmPos(0), NL_POS, false);
-  banner(); confetti(120); $('#endTitle').textContent=`Reis voltooid, ${player.name}!`;
+  banner(); confetti(120); Sound.sfx('win'); $('#endTitle').textContent=`Reis voltooid, ${player.name}!`;
   $('#end').hidden=false; busy=false; mode='end';
 }
 
@@ -1101,6 +1103,7 @@ async function openLoc(i){
   lmap.flyTo({center:[s.lng,s.lat],zoom:s.z||16.2,pitch:58,bearing:-22,duration:2600,essential:true,curve:1.2});
 }
 function openCard(i){
+  Sound.sfx('open');
   const s=STAYS[i]; (state.seenCard||(state.seenCard=new Set())).add(i);
   lmarker.getElement().querySelector('.lm-hint').hidden=true;
   $('#gal').innerHTML=s.photos.map(k=>`<img src="${IMG(k)}" alt="${s.stay}" draggable="false">`).join('');
@@ -1166,12 +1169,19 @@ function tapAt(x,y){
    ================================================================ */
 $('#intro').addEventListener('click',()=>{ if(mode==='intro'&&intro.t>.6) goMapFromIntro(); });
 $('#pickGo').addEventListener('click',startFromPick);
+/* sound: music starts on the first touch; soft tap on ordinary buttons; a toggle for those who want silence */
+const SPECIAL=new Set(['pickGo','start','next','cardX','sound']);
+document.addEventListener('pointerdown',e=>{ if(!Sound.muted) Sound.startMusic(); const b=e.target.closest&&e.target.closest('button,a.btn,.tag3d');
+  if(b&&!SPECIAL.has(b.id)&&!b.classList.contains('pick-card')&&!b.closest('.lm')) Sound.sfx('tap'); },{capture:true});
+const sb=$('#sound'); const syncSound=m=>{ sb.classList.toggle('muted',m); sb.setAttribute('aria-label',m?'Geluid aan':'Geluid uit'); };
+syncSound(Sound.muted); Sound.onChange(syncSound);
+sb.addEventListener('click',e=>{ e.stopPropagation(); Sound.setMuted(!Sound.muted); });
 $('#player').addEventListener('click',backToPick);
 $('#start').addEventListener('click',()=>{ if(mode!=='map'||busy) return; if(!state.started) startJourney(); else jumpTo(state.cur); });
 $('#toMap').addEventListener('click',()=>{ if(mode==='loc'&&!busy) backToMap(); });
 $('#next').addEventListener('click',()=>{ if(mode==='loc'&&!busy) driveNext(); });
 
-$('#cardX').addEventListener('click',()=>{ $('#card').hidden=true; });
+$('#cardX').addEventListener('click',()=>{ $('#card').hidden=true; Sound.sfx('close'); });
 $('#card').addEventListener('click',e=>{ if(e.target.id==='card') $('#card').hidden=true; });
 $('#again').addEventListener('click',async()=>{ $('#end').hidden=true; state.visited.clear(); state.started=false; state.cur=0; world.plane.visible=false; mode='map'; busy=true; refreshLabelState(); setStartLabel(); showHud(true); const o=ovr(); await camTo(o.pos,o.T,2.2,1.5); busy=false; });
 $('#endMap').addEventListener('click',async()=>{ $('#end').hidden=true; mode='map'; busy=true; world.plane.visible=false; showHud(true); setStartLabel(); const o=ovr(); await camTo(o.pos,o.T,2.2,1.5); busy=false; });

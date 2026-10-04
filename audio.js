@@ -1,0 +1,106 @@
+/* MAROC BRIDGES — sound: a light looping Moroccan game tune, click accents, and "yallah yallah" */
+const AC = window.AudioContext || window.webkitAudioContext;
+let ctx=null, master=null, musicBus=null, sfxBus=null, started=false, timer=null;
+let muted = false; try{ muted = localStorage.getItem('mb_muted')==='1'; }catch(_){}
+const listeners=new Set();
+
+/* D Hijaz: D Eb F# G A Bb C */
+const f = (semi, oct=4) => 293.66 * Math.pow(2, (semi + (oct-4)*12)/12);
+const H = {D:0, Eb:1, Fs:4, G:5, A:7, Bb:8, C:10};
+const BPM = 96, STEP = 60/BPM/4;                // 16th notes
+/* 4-bar melody (64 steps); null = rest; [note, octave, length] */
+const MEL = [
+ ['A',4,2],null,['Bb',4,1],['A',4,1], ['G',4,2],null,['Fs',4,2],null, ['G',4,1],['A',4,1],['Bb',4,2],null,['A',4,4],null,null,null,
+ ['D',5,2],null,['C',5,1],['Bb',4,1], ['A',4,2],null,['G',4,2],null, ['Fs',4,1],['G',4,1],['A',4,2],null,['D',4,4],null,null,null,
+ ['A',4,2],null,['Bb',4,1],['C',5,1], ['D',5,2],null,['C',5,1],['Bb',4,1], ['A',4,2],null,['G',4,1],['Fs',4,1],['G',4,4],null,null,null,
+ ['Fs',4,1],['G',4,1],['A',4,1],['Bb',4,1], ['A',4,2],null,['G',4,2],null, ['Fs',4,2],null,['Eb',4,2],null,['D',4,4],null,null,null ];
+/* darbuka: D = doum (low), T = tek (high), k = soft ka */
+const DRUM = 'D..kT.k.D.D.T.k.';
+const BASS = [['D',2],['D',2],['G',2],['D',2]];
+
+function ensure(){
+  if(ctx) return ctx;
+  if(!AC) return null;
+  ctx = new AC();
+  master = ctx.createGain(); master.gain.value = muted?0:1; master.connect(ctx.destination);
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value=-18; comp.ratio.value=3; comp.connect(master);
+  musicBus = ctx.createGain(); musicBus.gain.value = .16; musicBus.connect(comp);
+  sfxBus = ctx.createGain(); sfxBus.gain.value = .5; sfxBus.connect(comp);
+  // a touch of room
+  const delay = ctx.createDelay(); delay.delayTime.value = STEP*3; const fb = ctx.createGain(); fb.gain.value=.22; const wet=ctx.createGain(); wet.gain.value=.25;
+  musicBus.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(comp);
+  return ctx;
+}
+function pluck(freq, t, dur=.35, vol=.6, bus=musicBus, bright=2400){
+  const o=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+  o.type='triangle'; o2.type='sawtooth'; o.frequency.value=freq; o2.frequency.value=freq*1.003;
+  const g2=ctx.createGain(); g2.gain.value=.18;
+  lp.type='lowpass'; lp.frequency.setValueAtTime(bright,t); lp.frequency.exponentialRampToValueAtTime(500,t+dur);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.006); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp); lp.connect(bus);
+  o.start(t); o2.start(t); o.stop(t+dur+.05); o2.stop(t+dur+.05);
+}
+function bass(freq,t,dur){ const o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.55,t+.02); g.gain.exponentialRampToValueAtTime(.001,t+dur); o.connect(g); g.connect(musicBus); o.start(t); o.stop(t+dur+.05); }
+let NOISE=null;
+function noise(){ if(NOISE) return NOISE; const b=ctx.createBuffer(1,ctx.sampleRate*.3,ctx.sampleRate), d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return NOISE=b; }
+function drum(kind,t){
+  if(kind==='D'){ const o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(60,t+.15);
+    g.gain.setValueAtTime(.9,t); g.gain.exponentialRampToValueAtTime(.001,t+.22); o.connect(g); g.connect(musicBus); o.start(t); o.stop(t+.25); return; }
+  const s=ctx.createBufferSource(); s.buffer=noise(); const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=kind==='T'?3200:2200; bp.Q.value=kind==='T'?2:1.4;
+  const g=ctx.createGain(); const v=kind==='T'?.5:.22; g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.001,t+(kind==='T'?.07:.05));
+  s.connect(bp); bp.connect(g); g.connect(musicBus); s.start(t); s.stop(t+.1);
+}
+let step=0, nextT=0;
+function schedule(){
+  while(nextT < ctx.currentTime + .25){
+    const s=step%64, bar=Math.floor(s/16);
+    const m=MEL[s]; if(m) pluck(f(H[m[0]],m[1]), nextT, Math.max(.25,m[2]*STEP*1.6), .5);
+    const dch=DRUM[s%16]; if(dch!=='.') drum(dch,nextT);
+    if(s%16===0){ const b=BASS[bar]; bass(f(H[b[0]],b[1]), nextT, STEP*14); }
+    if(s%16===8){ const b=BASS[bar]; bass(f(H[b[0]],b[1]+1)*1, nextT, STEP*6); }
+    nextT += STEP*(s%2?0.94:1.06);               // a little swing
+    step++;
+  }
+}
+function startMusic(){
+  if(!ensure()) return;
+  if(ctx.state==='suspended') ctx.resume();
+  if(started) return; started=true; nextT=ctx.currentTime+.08; step=0;
+  timer=setInterval(schedule, 60); schedule();
+}
+/* SFX */
+function sfx(name){
+  if(!ensure()||muted) return; if(ctx.state==='suspended') ctx.resume();
+  const t=ctx.currentTime+.01;
+  if(name==='tap'){ pluck(f(H.A,5),t,.18,.5,sfxBus,4000); pluck(f(H.D,6),t+.05,.22,.4,sfxBus,4000); }
+  else if(name==='pick'){ pluck(f(H.D,5),t,.2,.5,sfxBus,4200); pluck(f(H.Fs,5),t+.06,.2,.45,sfxBus,4200); pluck(f(H.A,5),t+.12,.3,.45,sfxBus,4200); }
+  else if(name==='start'){ [H.D,H.Fs,H.A,H.D+12].forEach((n,i)=>pluck(f(n,5),t+i*.08,.35,.5,sfxBus,4500)); }
+  else if(name==='arrive'){ [H.D,H.A,H.D+12,H.Fs+12].forEach((n,i)=>pluck(f(n,5),t+i*.1,.5,.5,sfxBus,4500)); drum('D',t); drum('T',t+.2); drum('D',t+.3); }
+  else if(name==='open'){ pluck(f(H.G,5),t,.25,.45,sfxBus,3800); pluck(f(H.Bb,5),t+.07,.3,.4,sfxBus,3800); }
+  else if(name==='close'){ pluck(f(H.Bb,5),t,.2,.4,sfxBus,3500); pluck(f(H.G,5),t+.06,.25,.35,sfxBus,3500); }
+  else if(name==='win'){ [0,4,7,12,16,19,24].forEach((n,i)=>pluck(f(H.D+n,4),t+i*.09,.6,.5,sfxBus,5000)); [0,.18,.36,.54].forEach(d=>drum(d%.36?'T':'D',t+d)); }
+}
+/* "yallah yallah": a real Arabic voice when the phone has one, otherwise the bundled clip */
+let clip=null;
+function yallah(){
+  if(muted) return;
+  ensure(); if(ctx&&ctx.state==='suspended') ctx.resume();
+  try{
+    const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+    const ar=vs.find(v=>/^ar/i.test(v.lang));
+    if(ar){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance('يلا يلا!'); u.voice=ar; u.lang=ar.lang; u.rate=1.05; u.pitch=1.1; u.volume=1; speechSynthesis.speak(u); duck(1.6); return; }
+  }catch(_){}
+  try{ if(!clip){ clip=new Audio('data/yalla.mp3'); clip.preload='auto'; } clip.currentTime=0; clip.volume=1; clip.play().catch(()=>{}); duck(1.6); }catch(_){}
+}
+function duck(sec){ if(!musicBus) return; const t=ctx.currentTime; musicBus.gain.cancelScheduledValues(t); musicBus.gain.setTargetAtTime(.05,t,.05); musicBus.gain.setTargetAtTime(.16,t+sec,.3); }
+function setMuted(m){
+  muted=m; try{ localStorage.setItem('mb_muted',m?'1':'0'); }catch(_){}
+  if(master) master.gain.setTargetAtTime(m?0:1, ctx.currentTime, .05);
+  if(m&&window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(_){}
+  if(!m) startMusic();
+  listeners.forEach(fn=>fn(m));
+}
+if(window.speechSynthesis) try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices(); }catch(_){}
+document.addEventListener('visibilitychange',()=>{ if(!ctx) return; if(document.hidden) ctx.suspend(); else if(started) ctx.resume(); });
+export const Sound = { startMusic, sfx, yallah, setMuted, get muted(){return muted}, onChange:fn=>listeners.add(fn) };
