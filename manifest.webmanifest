@@ -1,12 +1,12 @@
 {
  "name": "Maroc Bridges",
  "short_name": "Maroc Bridges",
- "description": "Seven nights from Marrakech over the High Atlas to the Sahara and back.",
+ "description": "Het roadtrip-avontuur door Marokko: van Marrakech over de Hoge Atlas naar de Sahara en terug.",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
- "background_color": "#F5F4F2",
- "theme_color": "#F5F4F2",
+ "background_color": "#2a160c",
+ "theme_color": "#2a160c",
  "icons": [
   {
    "src": "icon-192.png",
@@ -24,5 +24,6 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "lang": "nl"
 }
