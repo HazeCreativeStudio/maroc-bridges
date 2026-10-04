@@ -24,27 +24,27 @@ const IMG = k => `img/${k}.jpg`;
 
 /* ---------------- trip data ---------------- */
 const STAYS = [
-  { id:"marrakech", place:"Marrakech", stay:"Riad Imilchil", nights:"Nacht 1–2", n:2, lat:31.622708, lng:-7.980829,
+  { id:"marrakech", place:"Marrakech", stay:"Riad Imilchil", nights:"Nacht 1–2", n:2, gq:"Riad Imilchil, Marrakech", lat:31.622708, lng:-7.980829,
     photos:["s_marrakech","s_marrakech_2","s_marrakech_3"],
     blurb:"Een kleine riad in het rustigere zuidelijke deel van de medina, een paar steegjes van het Bahia-paleis. De kamers combineren Marokkaans vakwerk met strakke, moderne lijnen. Er is een klein binnenzwembad en het ontbijt wordt op het dakterras geserveerd. Het Jemaa el-Fnaa-plein ligt op zo'n 15 minuten lopen.",
     when:"Ontbijt op het dakterras, 7:00–10:00.",
     tip:"Ga rond zonsondergang naar het Jemaa el-Fnaa-plein en pak een plekje op het dakterras van Le Grand Balcon du Café Glacier. Je ziet de rook van de eetkraampjes opstijgen, de verhalenvertellers en muzikanten op gang komen en de Koutoubia oplichten." },
-  { id:"aitbenhaddou", place:"Aït Benhaddou", stay:"Dar Mouna", nights:"Nacht 3", n:1, z:15, lat:31.062310, lng:-7.126352,
+  { id:"aitbenhaddou", place:"Aït Benhaddou", stay:"Dar Mouna", nights:"Nacht 3", n:1, z:15, lat:31.04754, lng:-7.12822, gurl:"https://maps.google.com/maps?q=Dar+Mouna,+Ait+ben+haddou,+Marokko&ftid=0xdbae066b160c387:0xd10f89895215f508",
     photos:["s_ait"],
     blurb:"Een familiehuis uit de jaren veertig, gebouwd door de vader van de huidige eigenaar, op 200 meter van de poort van de ksar, aan de overkant van de rivier. Elke kamer kijkt uit op de ksar of het zwembad. Het zwembad wordt gevoed door bronwater, er is een hammam op houtvuur en de groenten komen uit de eigen tuin.",
     when:"Zonsondergang vanaf het terras, met de ksar recht voor je.",
     tip:"Klim vroeg in de ochtend door de steegjes van de ksar naar de oude graanschuur (agadir) helemaal bovenop de heuvel. Voordat de dagjesmensen komen heb je het uitzicht over de rivier en de Ounila-vallei vaak helemaal voor jezelf." },
-  { id:"dades", place:"Boumalne Dadès", stay:"Sahara Stars Dades", nights:"Nacht 4–5", n:2, z:15.6, lat:31.362036, lng:-5.911116,
+  { id:"dades", place:"Boumalne Dadès", stay:"Sahara Stars Dades", nights:"Nacht 4–5", n:2, gq:"Riad Sahara Stars Dades, Boumalne Dades", z:15.6, lat:31.362036, lng:-5.911116,
     photos:["s_dades"],
     blurb:"Een hotel in riadstijl in de wijk Jida, aan de rand van Boumalne, op zo'n 13 minuten lopen van het begin van de Dadès-kloof. Buitenzwembad, tuin, terras, een bar-lounge en twee restaurants.",
     when:"Vroeg ontbijt op je kloofdag.",
     tip:"Rij zo'n 30 km de Dadès-kloof in naar de beroemde haarspeldbochten bij Tissadrine. Drink iets op het terras van Timzzillite, precies boven de bochten, en loop op de terugweg tussen de rode rotsvingers van de Monkey Fingers." },
-  { id:"ergchebbi", place:"Erg Chebbi", stay:"Madu Luxury Camp", nights:"Nacht 6", n:1, z:13.5, lat:31.190968, lng:-3.943228,
+  { id:"ergchebbi", place:"Erg Chebbi", stay:"Madu Luxury Camp", nights:"Nacht 6", n:1, gq:"Madu Luxury Desert Camp, Merzouga", z:13.5, lat:31.190968, lng:-3.943228,
     photos:["s_erg"],
     blurb:"Het woestijnkamp van Riad Madu bij Hassilabied. Acht Berbertenten tussen de duinen, elk met een king-, queen- of twinbed en een eigen terrasje, ongeveer een uur per kameel vanaf de riad.",
     when:"Inchecken 14:00–16:30, zodat je bij zonsondergang in het zand zit.",
     tip:"Rij naar het dorpje Khamlia, ten zuiden van Merzouga. De families daar stammen af van West-Afrikanen en spelen Gnawa-muziek: trommels, ijzeren castagnetten en zang. Je zit bij een glas thee en luistert mee." },
-  { id:"ouarzazate", place:"Ouarzazate", stay:"La Terrasse des Délices", nights:"Nacht 7", n:1, z:15.4, lat:30.918317, lng:-6.963771,
+  { id:"ouarzazate", place:"Ouarzazate", stay:"La Terrasse des Délices", nights:"Nacht 7", n:1, gq:"La Terrasse des Délices, Oasis de Fint, Ouarzazate", z:15.4, lat:30.918317, lng:-6.963771,
     photos:["s_ouarz"], credit:"Foto ter illustratie: de oase van Fint · Fraguando, CC BY-SA 4.0",
     blurb:"Een auberge in Douar Taharbilte in de oase van Fint, 12 km buiten Ouarzazate. Kleine terrassen en salons, een zwembad en een panoramaterras boven de palmen. De keuken kookt traditionele gerechten uit Zuid-Marokko.",
     when:"Diner op het panoramaterras.",
@@ -1096,7 +1096,7 @@ async function openLoc(i){
   const last=i===STAYS.length-1;
   $('#next span').textContent=last?'Op naar huis':'Op naar de volgende locatie';
   $('#next small').textContent=last?'→ Marrakech ✈ Nederland':`→ ${STAYS[i+1].place}`;
-  $('#explore').href=`https://www.google.com/maps/search/?api=1&query=${s.lat}%2C${s.lng}`;
+  $('#explore').href=s.gurl||`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.gq||(s.lat+','+s.lng))}`;
   await iris(false);
   lmap.flyTo({center:[s.lng,s.lat],zoom:s.z||16.2,pitch:58,bearing:-22,duration:2600,essential:true,curve:1.2});
 }
