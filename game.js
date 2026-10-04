@@ -393,7 +393,9 @@ const CHARACTERS = [
   { id:"jesse", name:"Jesse", robe:"#26386e", trim:"#e0393f", skin:"#f1c5a6", hair:"spiky", hairColor:"#957450", hairLight:"#b99a6c",
     brows:"#86684a", eyes:"#5d6f82", mouth:"open", grin:.92, gap:true, bigEars:true, collar:"#d8343f", scale:.78, robeName:"Marineblauwe djellaba" },
   { id:"freek", name:"Freek", robe:"#d9612a", trim:"#f6e2b3", skin:"#efbea2", hair:"shaved", hairColor:"#d6ad86",
-    brows:"#b98d68", eyes:"#5a7fa8", smile:.75, smirk:.18, beard:"stubble", beardColor:"#c29a77", collar:"#6f7480", robeName:"Terracotta djellaba" }
+    brows:"#b98d68", eyes:"#5a7fa8", smile:.75, smirk:.18, beard:"stubble", beardColor:"#c29a77", collar:"#6f7480", robeName:"Terracotta djellaba" },
+  { id:"liesbeth", name:"Liesbeth", robe:"#119fbf", trim:"#f2c14e", skin:"#e4aa86", hair:"messybun", hairColor:"#4a3022",
+    brows:"#3d281c", eyes:"#5a4130", lashes:true, squint:true, mouth:"open", grin:1.15, collar:"#3aa86b", robeName:"Turquoise djellaba" }
 ];
 const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
 
@@ -436,7 +438,7 @@ function buildCharacter(c){
   g.lids=[];
   for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*.17,.06,.41); head.add(e);
     e.add(ell(.1,.11,.06,white,0,0,0)); e.add(ell(.058,.064,.03,M(c.eyes||'#4a3424',{r:.3}),0,-.005,.045)); e.add(ell(.032,.036,.02,black,0,-.005,.06)); e.add(mesh(SPH(.016,8,6),white,.025,.03,.075));
-    const lid=ell(.106,.116,.07,skin,0,0,0); lid.scale.y=.01; lid.position.y=.07; e.add(lid); g.lids.push(lid);
+    const lid=ell(.106,.116,.07,skin,0,0,0); lid.userData.sy=.116; lid.userData.rest=c.squint?.5:.01; lid.scale.y=.116*lid.userData.rest; lid.position.y=.07; e.add(lid); g.lids.push(lid);
     if(c.lashes) for(let k=0;k<3;k++){ const la=mesh(new THREE.CapsuleGeometry(.008,.035,3,5),M('#3a2a20',{r:.6}),s*(.17+.06*(k-1)+s*.03),.15+(k===1?.01:0),.43); la.rotation.z=-s*(.5+k*.35)+(s>0?0:0); head.add(la); }
     const brow=mesh(new THREE.CapsuleGeometry(.022,.1,4,8),M(c.brows||c.hairColor,{r:.8}),s*.17,.21,.44); brow.rotation.z=Math.PI/2+s*.12; head.add(brow); }
   // smile
@@ -497,6 +499,15 @@ function buildCharacter(c){
   else if(c.hair==='shaved'){
     head.add(shell(0,Math.PI*2,0,.88,1.012));
     head.add(shell(Math.PI/2+.85,Math.PI*2-1.7,.8,.75,1.013)); }
+  else if(c.hair==='messybun'){
+    head.add(shell(0,Math.PI*2,0,.95,1.05));
+    head.add(shell(Math.PI/2+.75,Math.PI*2-1.5,.6,.85,1.06));
+    for(let k=0;k<14;k++){ const th=.25+(k%4)*.17, ph=k*2.39; if(Math.sin(ph)>.6&&th>.5) continue;
+      head.add(ell(.13,.09,.12,hm,Math.sin(th)*Math.cos(ph)*.53,Math.cos(th)*.5,Math.sin(th)*Math.sin(ph)*.5)); }
+    [[0,.5,-.2,.17],[.12,.58,-.24,.13],[-.11,.57,-.22,.13],[0,.64,-.12,.11]].forEach(([x,y,z,r])=>head.add(mesh(SPH(r,14,10),hm,x,y,z)));
+    for(const s of [-1,1]){ const cv=new THREE.CatmullRomCurve3([new THREE.Vector3(s*.4,.2,.22),new THREE.Vector3(s*.5,.0,.18),new THREE.Vector3(s*.45,-.15,.24),new THREE.Vector3(s*.52,-.32,.16)]);
+      head.add(mesh(new THREE.TubeGeometry(cv,20,.03,6),hm)); }
+    const fr=ell(.25,.08,.16,hm,-.12,.38,.3); fr.rotation.z=.4; fr.rotation.x=-.5; head.add(fr); }
   else if(c.hair==='short'){ head.add(shell(0,Math.PI*2,0,1.15)); }
   else if(c.hair==='long'){
     head.add(shell(0,Math.PI*2,0,.8,1.06));
@@ -563,7 +574,7 @@ function updatePick(dt){
 function animChar(m,t,wave){
   if(m.arms){ if(wave&&m.pose==='thumbs'){ m.arms[1].rotation.z=1.9+Math.sin(t*5)*.07; m.arms[1].rotation.x=-.35; } else if(wave){ m.arms[1].rotation.z=2.5+Math.sin(t*7)*.32; m.arms[1].rotation.x=.15; } m.arms[0].rotation.z=-.32+Math.sin(t*1.8)*.04; }
   if(m.head){ m.head.rotation.z=Math.sin(t*1.6)*.06; m.head.rotation.y=Math.sin(t*.9)*.12; }
-  const bl=(t%3.8)>3.66; m.lids.forEach(l=>l.scale.y=bl?1:.01);
+  const bl=(t%3.8)>3.66; m.lids.forEach(l=>l.scale.y=(l.userData.sy||1)*(bl?1:(l.userData.rest??.01)));
 }
 
 /* ================================================================
@@ -640,7 +651,7 @@ function updateIntro(dt){
   // camel life
   if(intro.charModel) animChar(intro.charModel,t,t>1.9);
   const c=intro.camel; c.head.rotation.z=Math.sin(t*1.4)*.08; c.head.rotation.y=Math.sin(t*.7)*.2; c.tail.rotation.x=Math.sin(t*3)*.35;
-  const bl=(t%3.4)>3.25; c.lids.forEach(l=>l.scale.y=bl?1:.02);
+  const bl=(t%3.4)>3.25; c.lids.forEach(l=>l.scale.y=bl?.112:.002);
   intro.lanterns.forEach((l,i)=>l.rotation.y=t*.3+i);
   intro.lamp.intensity=5+Math.sin(t*9)*.4+Math.sin(t*23)*.3;
   intro.clouds.forEach((cl,i)=>cl.position.x+=dt*(.15+i*.03));
