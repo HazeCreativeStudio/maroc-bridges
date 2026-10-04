@@ -405,7 +405,9 @@ const CHARACTERS = [
   { id:"merel", name:"Merel", robe:"#f1e6d0", trim:"#c99a3a", skin:"#eab48f", hair:"ponytail", sleek:true, ponyFront:true, hairColor:"#a6845a", hairLight:"#c8a878",
     brows:"#8a6a48", eyes:"#6b8db0", lashes:true, mouth:"open", grin:1.15, freckles:true, earrings:"#e2b04a", hoopSize:1.9, collar:"#f2d6d6", robeName:"Ivoorwitte djellaba" },
   { id:"jonathan", name:"Jonathan", robe:"#2a2a31", trim:"#e6b94a", skin:"#eebc9c", hair:"quiff", hairColor:"#8a7055", hairLight:"#a89276", sideColor:"#9b8b79",
-    brows:"#7a6248", eyes:"#64717d", mouth:"open", grin:1.15, beard:"stubble", beardColor:"#c9a78a", collar:"#ffffff", robeName:"Zwarte djellaba" }
+    brows:"#7a6248", eyes:"#64717d", mouth:"open", grin:1.15, beard:"stubble", beardColor:"#c9a78a", collar:"#ffffff", robeName:"Zwarte djellaba" },
+  { id:"noah", name:"Noah", robe:"#8cc6ee", trim:"#f2c14e", skin:"#f5d0b8", hair:"wispy", hairColor:"#efdcae",
+    brows:"#e2c896", eyes:"#5f8fc4", bigEyes:1.15, mouth:"open", grin:.85, collar:"#8c9a76", scale:.62, headScale:1.12, robeName:"Babyblauwe djellaba" }
 ];
 const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
 
@@ -447,7 +449,7 @@ function buildCharacter(c){
   head.add(ell(.1,.1,.11,M(shade(c.skin,-.04),{r:.5}),0,-.04,.48));
   // eyes
   g.lids=[];
-  for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*.17,.06,.41); head.add(e);
+  for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*.17,.06,.41); if(c.bigEyes) e.scale.setScalar(c.bigEyes); head.add(e);
     e.add(ell(.1,.11,.06,white,0,0,0)); e.add(ell(.058,.064,.03,M(c.eyes||'#4a3424',{r:.3}),0,-.005,.045)); e.add(ell(.032,.036,.02,black,0,-.005,.06)); e.add(mesh(SPH(.016,8,6),white,.025,.03,.075));
     const lid=ell(.106,.116,.07,skin,0,0,0); lid.userData.sy=.116; lid.userData.rest=c.squint?.5:.01; lid.scale.y=.116*lid.userData.rest; lid.position.y=.07; e.add(lid); g.lids.push(lid);
     if(c.lashes) for(let k=0;k<3;k++){ const la=mesh(new THREE.CapsuleGeometry(.008,.035,3,5),M('#3a2a20',{r:.6}),s*(.17+.06*(k-1)+s*.03),.15+(k===1?.01:0),.43); la.rotation.z=-s*(.5+k*.35)+(s>0?0:0); head.add(la); }
@@ -539,6 +541,11 @@ function buildCharacter(c){
     head.add(shell(0,Math.PI*2,0,.8,1.05));
     [[-.18,.44,.2,.22,-.55,.3],[.08,.48,.22,.25,-.6,-.15],[.26,.4,.16,.2,-.5,-.45],[-.05,.52,.0,.22,-.3,.0],[.2,.48,-.05,.18,-.3,-.4],[-.25,.42,-.05,.18,-.3,.45]].forEach(([x,y,z,r,rx,rz],i)=>{
       const q=ell(r,.09,r*.75,i%2?hl:hm,x,y,z); q.rotation.x=rx; q.rotation.z=rz; head.add(q); }); }
+  else if(c.hair==='wispy'){
+    head.add(shell(0,Math.PI*2,0,.7,1.02));
+    for(let k=0;k<16;k++){ const th=.15+(k%4)*.15, ph=k*2.39; const x=Math.sin(th)*Math.cos(ph)*.52, y=Math.cos(th)*.5+.02, z=Math.sin(th)*Math.sin(ph)*.5;
+      const cv=new THREE.CatmullRomCurve3([new THREE.Vector3(x,y,z),new THREE.Vector3(x*1.15,y+.07,z*1.15+.02),new THREE.Vector3(x*1.05+.03,y+.11,z*1.05)]);
+      head.add(mesh(new THREE.TubeGeometry(cv,8,.022,5),hm)); } }
   else if(c.hair==='short'){ head.add(shell(0,Math.PI*2,0,1.15)); }
   else if(c.hair==='long'){
     const hl=M(c.hairLight||c.hairColor,{r:.8});
@@ -564,6 +571,7 @@ function buildCharacter(c){
       const tc=new THREE.CatmullRomCurve3([new THREE.Vector3(s*.3,.07,.49),new THREE.Vector3(s*.43,.08,.34),new THREE.Vector3(s*.5,.07,.04)]);
       head.add(mesh(new THREE.TubeGeometry(tc,12,.012,6),gm)); }
     const br=mesh(CYL(.012,.012,.1,6),gm,0,.08,.5); br.rotation.z=Math.PI/2; head.add(br); }
+  if(c.headScale){ head.scale.setScalar(c.headScale); head.position.y+=.06; }
   g.userData.base=c.scale||1; g.scale.setScalar(g.userData.base);
   return g;
 }
@@ -602,8 +610,8 @@ function setPickModel(c){
 }
 function updatePick(dt){
   pick.t+=dt; const t=pick.t;
-  const asp=innerWidth/innerHeight; const dist=asp<1?9.6:6.2;
-  camera.position.set(Math.sin(.15)*dist, 2.6, Math.cos(.15)*dist); camTgt.set(0,asp<1?.55:.95,0); look();
+  const asp=innerWidth/innerHeight; const many=CHARACTERS.length>8; const dist=asp<1?(many?10.4:9.6):6.2;
+  camera.position.set(Math.sin(.15)*dist, 2.6, Math.cos(.15)*dist); camTgt.set(0,asp<1?(many?-.35:.55):.95,0); look();
   pick.pop=Math.min(1,pick.pop+dt*1.8); const s=E.back(pick.pop)*(pick.model?pick.model.userData.base:1); if(pick.model){ pick.model.scale.set(s*(1+Math.sin(t*2.4)*.012), s*(1-Math.sin(t*2.4)*.012), s);
     pick.model.rotation.y=Math.sin(t*.6)*.45; animChar(pick.model,t,true); }
   if(pick.palm) pick.palm.crown.rotation.z=Math.sin(t*1.3)*.05;

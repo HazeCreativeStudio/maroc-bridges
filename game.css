@@ -208,4 +208,6 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .lm-in .lm-char{width:62px;height:62px;margin-right:-22px;margin-bottom:6px;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(40,15,0,.35));animation:hop 1s ease-in-out infinite reverse}
 
 #pickGo{font-size:27px;padding:12px 30px 14px;min-width:0}
-.pick-grid.many{gap:8px 6px;max-width:400px}.pick-grid.many .pick-card{width:58px}.pick-grid.many .pick-card .av{width:52px;height:52px}.pick-grid.many .pick-card > span{font-size:11.5px}
+.pick-grid.many{gap:6px 4px;max-width:400px}.pick-grid.many .pick-card{width:60px;gap:2px}.pick-grid.many .pick-card .av{width:48px;height:48px;border-width:2.5px;box-shadow:0 3px 0 var(--ink-2)}.pick-grid.many .pick-card > span{font-size:11px}
+#pick:has(.pick-grid.many) .pick-name b{font-size:36px}
+#pick:has(.pick-grid.many) .pick-bottom{gap:9px}
