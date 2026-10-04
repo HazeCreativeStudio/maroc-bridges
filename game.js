@@ -399,7 +399,9 @@ const CHARACTERS = [
   { id:"saar", name:"Saar", robe:"#f09bbd", trim:"#f2c14e", skin:"#f2c2a2", hair:"wavy", hairColor:"#8a5d3b", hairLight:"#c49562",
     brows:"#6d4a30", eyes:"#5a3d28", lashes:true, mouth:"open", braces:true, earrings:"#d9dde2", hoopSize:1.7, sunnies:true, collar:"#f7d3e2", scale:.82, robeName:"Poederroze djellaba" },
   { id:"nova", name:"Nova", robe:"#6b2a63", trim:"#f2c14e", skin:"#ecb58f", hair:"ponytail", sleek:true, hairColor:"#a27b4e",
-    brows:"#8a6845", eyes:"#6a8199", lashes:true, smile:.8, smirk:.1, necklace:"#e6c25a", lips:"#c8505c", collar:"#4a1c44", scale:.88, robeName:"Aubergine djellaba" }
+    brows:"#8a6845", eyes:"#6a8199", lashes:true, smile:.8, smirk:.1, necklace:"#e6c25a", lips:"#c8505c", collar:"#4a1c44", scale:.88, robeName:"Aubergine djellaba" },
+  { id:"christa", name:"Christa", robe:"#8c9a33", trim:"#f6e2b3", skin:"#efc0a0", hair:"long", sweptBack:true, hairColor:"#7a4f31", hairLight:"#a97a4c",
+    brows:"#6e4a30", eyes:"#6f7d55", lashes:true, mouth:"open", grin:1.1, freckles:true, earrings:"#e2a93a", earStud:true, pose:"thumbs", collar:"#556b3a", robeName:"Olijfgroene djellaba" }
 ];
 const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
 
@@ -527,10 +529,13 @@ function buildCharacter(c){
     for(let k=0;k<9;k++){ const y=-.05-k*.11, x=.25*Math.sin(k*1.3); head.add(ell(.3,.12,.16,k>4?hl:hm,x*.6,y,-.3-.02*k)); } }
   else if(c.hair==='short'){ head.add(shell(0,Math.PI*2,0,1.15)); }
   else if(c.hair==='long'){
-    head.add(shell(0,Math.PI*2,0,.8,1.06));
+    const hl=M(c.hairLight||c.hairColor,{r:.8});
+    head.add(shell(0,Math.PI*2,0,c.sweptBack?.86:.8,1.06));
     head.add(shell(Math.PI/2+.62,Math.PI*2-1.24,.6,.95,1.07));
-    for(const s of [-1,1]){ const w=ell(.27,.09,.2,hm,s*.2,.36,.3); w.rotation.z=-s*.42; w.rotation.x=-.5; head.add(w);
-      const cur=ell(.14,.52,.16,hm,s*.44,-.24,-.02); cur.rotation.z=s*.08; head.add(cur); }
+    for(const s of [-1,1]){ if(c.sweptBack){ const w=ell(.3,.08,.2,s>0?hl:hm,s*.16,.42,.22); w.rotation.z=-s*.25; w.rotation.x=-.8; head.add(w); }
+      else { const w=ell(.27,.09,.2,hm,s*.2,.36,.3); w.rotation.z=-s*.42; w.rotation.x=-.5; head.add(w); }
+      const cur=ell(.14,.52,.16,hm,s*.44,-.24,-.02); cur.rotation.z=s*.08; head.add(cur);
+      if(c.hairLight){ const cl=ell(.1,.4,.12,hl,s*.47,-.36,.04); cl.rotation.z=s*.08; head.add(cl); } }
     head.add(ell(.5,.64,.25,hm,0,-.3,-.24)); }
   else if(c.hair==='bun'){ head.add(shell(0,Math.PI*2,0,1.15)); head.add(mesh(SPH(.17,16,12),hm,0,.45,-.18)); }
   else if(c.hair==='curly'){ for(let i=0;i<40;i++){ const th=Math.acos(1-Math.random()*1.05), ph=Math.random()*Math.PI*2; if(Math.sin(ph)>.55&&th>.6) continue; head.add(mesh(SPH(.11,10,8),hm,.52*Math.sin(th)*Math.cos(ph),.5*Math.cos(th),.5*Math.sin(th)*Math.sin(ph))); } }
