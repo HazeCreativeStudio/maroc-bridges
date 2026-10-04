@@ -401,7 +401,9 @@ const CHARACTERS = [
   { id:"nova", name:"Nova", robe:"#6b2a63", trim:"#f2c14e", skin:"#ecb58f", hair:"ponytail", sleek:true, hairColor:"#a27b4e",
     brows:"#8a6845", eyes:"#6a8199", lashes:true, smile:.8, smirk:.1, necklace:"#e6c25a", lips:"#c8505c", collar:"#4a1c44", scale:.88, robeName:"Aubergine djellaba" },
   { id:"christa", name:"Christa", robe:"#8c9a33", trim:"#f6e2b3", skin:"#efc0a0", hair:"long", sweptBack:true, hairColor:"#7a4f31", hairLight:"#a97a4c",
-    brows:"#6e4a30", eyes:"#6f7d55", lashes:true, mouth:"open", grin:1.1, freckles:true, earrings:"#e2a93a", earStud:true, pose:"thumbs", collar:"#556b3a", robeName:"Olijfgroene djellaba" }
+    brows:"#6e4a30", eyes:"#6f7d55", lashes:true, mouth:"open", grin:1.1, freckles:true, earrings:"#e2a93a", earStud:true, pose:"thumbs", collar:"#556b3a", robeName:"Olijfgroene djellaba" },
+  { id:"merel", name:"Merel", robe:"#f1e6d0", trim:"#c99a3a", skin:"#eab48f", hair:"ponytail", sleek:true, ponyFront:true, hairColor:"#a6845a", hairLight:"#c8a878",
+    brows:"#8a6a48", eyes:"#6b8db0", lashes:true, mouth:"open", grin:1.15, freckles:true, earrings:"#e2b04a", hoopSize:1.9, collar:"#f2d6d6", robeName:"Ivoorwitte djellaba" }
 ];
 const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
 
@@ -494,7 +496,9 @@ function buildCharacter(c){
       for(const s of [-1,1]){ const w=ell(.24,.07,.17,hm,s*.19,.4,.26); w.rotation.z=-s*.5; w.rotation.x=-.62; head.add(w); }
       head.add(shell(Math.PI*1.5-1.3,2.6,.5,.85,1.05));
       head.add(shell(Math.PI/2+1.25,Math.PI*2-2.5,.6,.55,1.05));
-      const pt3=ell(.12,.3,.12,hm,.3,-.45,-.42); pt3.rotation.z=-.3; pt3.rotation.x=.3; head.add(pt3); }
+      if(c.ponyFront){ const hl=M(c.hairLight||c.hairColor,{r:.8}); const pc=new THREE.CatmullRomCurve3([new THREE.Vector3(-.3,.05,-.4),new THREE.Vector3(-.5,-.3,-.15),new THREE.Vector3(-.5,-.62,.12),new THREE.Vector3(-.42,-.95,.24)]);
+        head.add(mesh(new THREE.TubeGeometry(pc,24,.11,12),hm)); head.add(ell(.1,.16,.1,hl,-.42,-1.0,.25)); }
+      else { const pt3=ell(.12,.3,.12,hm,.3,-.45,-.42); pt3.rotation.z=-.3; pt3.rotation.x=.3; head.add(pt3); } }
     head.add(mesh(new THREE.TorusGeometry(.07,.03,8,18),M('#e05a8a',{r:.5}),0,.22,-.5));
     const pt=ell(.15,.36,.14,hm,0,-.12,-.6); pt.rotation.x=.35; head.add(pt);
     const pt2=ell(.1,.2,.1,hm,0,-.42,-.55); pt2.rotation.x=-.2; head.add(pt2); }
