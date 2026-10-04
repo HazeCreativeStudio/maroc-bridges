@@ -381,7 +381,9 @@ const CHARACTERS = [
   { id:"cock", name:"Cock", robe:"#2f5fd0", trim:"#f2c14e", skin:"#e8b496", hair:"baldtop", hairColor:"#dcdcdc",
     brows:"#bdbdbd", glasses:{color:"#4f6f9f", shape:"round"}, collar:"#ffffff", smile:.9, robeName:"Koningsblauwe djellaba" },
   { id:"margreet", name:"Margreet", robe:"#d63f86", trim:"#f2c14e", skin:"#f1c6aa", hair:"bob", hairColor:"#d3d0cc",
-    brows:"#a99f95", eyes:"#5f7e9c", lashes:true, mouth:"open", collar:"#f6e6d6", robeName:"Fuchsiaroze djellaba" }
+    brows:"#a99f95", eyes:"#5f7e9c", lashes:true, mouth:"open", collar:"#f6e6d6", robeName:"Fuchsiaroze djellaba" },
+  { id:"bas", name:"Bas", robe:"#1f9e6a", trim:"#f2c14e", skin:"#eab99b", hair:"buzz", hairColor:"#857e76",
+    brows:"#8f877d", eyes:"#6f8aa6", mouth:"open", grin:1.18, gap:true, beard:"stubble", beardColor:"#a2988c", collar:"#1f2a44", robeName:"Smaragdgroene djellaba" }
 ];
 const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
 
@@ -427,11 +429,12 @@ function buildCharacter(c){
     const brow=mesh(new THREE.CapsuleGeometry(.022,.1,4,8),M(c.brows||c.hairColor,{r:.8}),s*.17,.21,.44); brow.rotation.z=Math.PI/2+s*.12; head.add(brow); }
   // smile
   if(c.mouth==='open'){ const mo=ell(.13,.075,.05,M('#7a2f22',{r:.5}),0,-.2,.44); mo.scale.y=.07; head.add(mo);
-    const mouth=new THREE.Group(); mouth.position.set(0,-.19,.445); mouth.rotation.x=-.3; head.add(mouth);
+    const mouth=new THREE.Group(); mouth.position.set(0,-.19,c.beard?.475:.445); mouth.rotation.x=-.3; mouth.scale.x=c.grin||1; head.add(mouth);
     const lip=new THREE.Shape(); lip.moveTo(-.13,0); lip.quadraticCurveTo(0,-.2,.13,0); lip.quadraticCurveTo(0,.02,-.13,0);
     mouth.add(mesh(new THREE.ShapeGeometry(lip,16),M('#8a2e26',{r:.5,ds:true}),0,0,0));
     const th=new THREE.Shape(); th.moveTo(-.105,-.005); th.quadraticCurveTo(0,.012,.105,-.005); th.quadraticCurveTo(.07,-.06,0,-.065); th.quadraticCurveTo(-.07,-.06,-.105,-.005);
-    mouth.add(mesh(new THREE.ShapeGeometry(th,12),M('#ffffff',{r:.3,ds:true}),0,0,.004));
+    mouth.add(mesh(new THREE.ShapeGeometry(th,12),M(c.teeth||'#fbf6e8',{r:.3,ds:true}),0,0,.004));
+    if(c.gap) mouth.add(mesh(new THREE.PlaneGeometry(.008,.05),M('#5a1e18',{ds:true}),0,-.03,.007));
     head.remove(mo); }
   else { const arc=Math.PI*.7*(c.smile??.9); const sm=mesh(new THREE.TorusGeometry(.12,.022,8,24,arc),M('#7a2f22',{r:.5}),0,-.2,.44); sm.rotation.z=Math.PI*1.5-arc/2; sm.rotation.x=-.25; head.add(sm); }
   // hair
@@ -444,12 +447,19 @@ function buildCharacter(c){
     const fr=ell(.3,.085,.17,hm,-.06,.37,.31); fr.rotation.z=.42; fr.rotation.x=-.55; head.add(fr);
     const fr2=ell(.17,.07,.13,hm,.2,.4,.27); fr2.rotation.z=-.15; fr2.rotation.x=-.5; head.add(fr2);
     [[-.2,.47,.05,.4],[.12,.5,.0,-.3],[-.02,.52,-.15,.1],[.26,.42,-.12,-.6],[-.3,.4,-.12,.7]].forEach(([x,y,z,r])=>{ const tf=ell(.17,.07,.14,hm,x,y,z); tf.rotation.z=r; head.add(tf); }); }
+  else if(c.hair==='buzz'){
+    head.add(shell(0,Math.PI*2,0,.66,1.025));
+    head.add(shell(Math.PI/2+.75,Math.PI*2-1.5,.5,1.05,1.03));
+    for(let k=0;k<30;k++){ const th=.1+Math.random()*.58, ph=Math.random()*Math.PI*2; if(Math.sin(ph)>.2&&th>.42) continue;
+      const tf=mesh(SPH(.05,8,6),hm,.515*Math.sin(th)*Math.cos(ph),.49*Math.cos(th)+.01,.48*Math.sin(th)*Math.sin(ph)); tf.scale.set(1,.55,1); head.add(tf); } }
   else if(c.hair==='short'){ head.add(shell(0,Math.PI*2,0,1.15)); }
   else if(c.hair==='long'){ head.add(shell(0,Math.PI*2,0,1.2)); head.add(ell(.42,.55,.2,hm,0,-.3,-.3)); }
   else if(c.hair==='bun'){ head.add(shell(0,Math.PI*2,0,1.15)); head.add(mesh(SPH(.17,16,12),hm,0,.45,-.18)); }
   else if(c.hair==='curly'){ for(let i=0;i<40;i++){ const th=Math.acos(1-Math.random()*1.05), ph=Math.random()*Math.PI*2; if(Math.sin(ph)>.55&&th>.6) continue; head.add(mesh(SPH(.11,10,8),hm,.52*Math.sin(th)*Math.cos(ph),.5*Math.cos(th),.5*Math.sin(th)*Math.sin(ph))); } }
   head.children.forEach(o=>{ if(o.material===hm) o.castShadow=false; });
-  if(c.beard){ const b=mesh(new THREE.SphereGeometry(.5,32,16,Math.PI/2-1.2,2.4,1.85,.9),M(c.beardColor||c.hairColor,{r:.9,ds:true}),0,0,0); b.scale.set(1.04,1,1.0); head.add(b); }
+  if(c.beard){ const bm=M(c.beardColor||c.hairColor,{r:.95,ds:true});
+    const b=mesh(new THREE.SphereGeometry(.5,40,20,Math.PI/2-1.35,2.7,1.98,.9),bm,0,0,0); b.scale.set(1.025,.97,.955); head.add(b);
+    const mu=ell(.15,.028,.05,bm,0,-.135,.458); mu.rotation.x=-.3; head.add(mu); }
   // glasses
   if(c.glasses){ const gm=M(c.glasses.color,{r:.3,m:.4});
     for(const s of [-1,1]){ head.add(mesh(new THREE.TorusGeometry(.135,.016,8,32),gm,s*.17,.06,.49));
