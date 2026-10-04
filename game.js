@@ -1096,7 +1096,7 @@ async function openLoc(i){
   const last=i===STAYS.length-1;
   $('#next span').textContent=last?'Op naar huis':'Op naar de volgende locatie';
   $('#next small').textContent=last?'→ Marrakech ✈ Nederland':`→ ${STAYS[i+1].place}`;
-  $('#explore').dataset.url=`https://www.google.com/maps/@?api=1&map_action=map&center=${s.lat},${s.lng}&zoom=15`;
+  $('#explore').href=`https://www.google.com/maps/search/?api=1&query=${s.lat}%2C${s.lng}`;
   await iris(false);
   lmap.flyTo({center:[s.lng,s.lat],zoom:s.z||16.2,pitch:58,bearing:-22,duration:2600,essential:true,curve:1.2});
 }
@@ -1170,7 +1170,7 @@ $('#player').addEventListener('click',backToPick);
 $('#start').addEventListener('click',()=>{ if(mode!=='map'||busy) return; if(!state.started) startJourney(); else jumpTo(state.cur); });
 $('#toMap').addEventListener('click',()=>{ if(mode==='loc'&&!busy) backToMap(); });
 $('#next').addEventListener('click',()=>{ if(mode==='loc'&&!busy) driveNext(); });
-$('#explore').addEventListener('click',()=>{ const u=$('#explore').dataset.url; if(u) window.open(u,'_blank','noopener'); });
+
 $('#cardX').addEventListener('click',()=>{ $('#card').hidden=true; });
 $('#card').addEventListener('click',e=>{ if(e.target.id==='card') $('#card').hidden=true; });
 $('#again').addEventListener('click',async()=>{ $('#end').hidden=true; state.visited.clear(); state.started=false; state.cur=0; world.plane.visible=false; mode='map'; busy=true; refreshLabelState(); setStartLabel(); showHud(true); const o=ovr(); await camTo(o.pos,o.T,2.2,1.5); busy=false; });

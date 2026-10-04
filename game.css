@@ -21,7 +21,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .screen > *{pointer-events:auto}
 
 /* ---------- buttons ---------- */
-.btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+.btn{text-decoration:none;box-sizing:border-box;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
   font-family:var(--game);font-size:21px;letter-spacing:.3px;color:#fff;line-height:1.05;
   background:linear-gradient(180deg,#ffb067 0%,var(--orange) 45%,var(--orange-d) 100%);
   border:3px solid var(--ink);border-radius:22px;padding:13px 22px 14px;min-height:58px;
