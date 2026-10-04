@@ -1,7 +1,15 @@
 // Maroc Bridges offline cache: everything is stored on first open so the app works without signal.
-const CACHE="maroc-bridges-game-v23";
-const FILES=["index.html", "game.js", "audio.js", "data/yalla.mp3", "game.css", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "maplibre-gl.js", "data/land.json", "lib/RoomEnvironment.js", "lib/RoundedBoxGeometry.js", "lib/maplibre.css", "lib/three.module.min.js", "fonts/lilita-one-latin-400-normal.woff2", "fonts/nunito-latin-700-normal.woff2", "fonts/nunito-latin-800-normal.woff2", "fonts/nunito-latin-900-normal.woff2", "map/aitbenhaddou-0.txt", "map/dades-0.txt", "map/ergchebbi-0.txt", "map/fonts.json", "map/index.json", "map/liberty.json", "map/liberty.png", "map/liberty@2x.json", "map/liberty@2x.png", "map/low-0.txt", "map/marrakech-0.txt", "map/mid-0.txt", "map/ouarzazate-0.txt", "map/route-0.txt", "map/route13-0.txt", "map/stops-0.txt", "map/style-light.json", "img/s_ait.jpg", "img/s_dades.jpg", "img/s_erg.jpg", "img/s_marrakech.jpg", "img/s_marrakech_2.jpg", "img/s_marrakech_3.jpg", "img/s_ouarz.jpg"];
+const CACHE="maroc-bridges-game-v24";
+const FILES=["index.html", "game.js", "audio.js", "data/yalla.mp3", "data/silence.mp3", "game.css", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "maplibre-gl.js", "data/land.json", "lib/RoomEnvironment.js", "lib/RoundedBoxGeometry.js", "lib/maplibre.css", "lib/three.module.min.js", "fonts/lilita-one-latin-400-normal.woff2", "fonts/nunito-latin-700-normal.woff2", "fonts/nunito-latin-800-normal.woff2", "fonts/nunito-latin-900-normal.woff2", "map/aitbenhaddou-0.txt", "map/dades-0.txt", "map/ergchebbi-0.txt", "map/fonts.json", "map/index.json", "map/liberty.json", "map/liberty.png", "map/liberty@2x.json", "map/liberty@2x.png", "map/low-0.txt", "map/marrakech-0.txt", "map/mid-0.txt", "map/ouarzazate-0.txt", "map/route-0.txt", "map/route13-0.txt", "map/stops-0.txt", "map/style-light.json", "img/s_ait.jpg", "img/s_dades.jpg", "img/s_erg.jpg", "img/s_marrakech.jpg", "img/s_marrakech_2.jpg", "img/s_marrakech_3.jpg", "img/s_ouarz.jpg"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(["./",...FILES])).then(()=>self.skipWaiting()));});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
-self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;
-  e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(r=>r||fetch(e.request).then(res=>{if(res.ok&&new URL(e.request.url).origin===location.origin){const cp=res.clone();caches.open(CACHE).then(c=>c.put(e.request,cp));}return res;})));});
+// app code (page, scripts, styles): network first so updates show at once; everything else (map, photos, fonts, libraries): cache first
+const FRESH=/(\/|\.html|game\.js|audio\.js|game\.css|manifest\.webmanifest)$/;
+self.addEventListener("fetch",e=>{ if(e.request.method!=="GET") return; const u=new URL(e.request.url); if(u.origin!==location.origin) return;
+  const put=res=>{ if(res.ok){ const cp=res.clone(); caches.open(CACHE).then(c=>c.put(e.request,cp)); } return res; };
+  if(e.request.mode==="navigate"||FRESH.test(u.pathname)){
+    e.respondWith(fetch(e.request,{cache:"no-cache"}).then(put).catch(()=>caches.match(e.request,{ignoreSearch:true}).then(r=>r||caches.match("./"))));
+  } else {
+    e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(r=>r||fetch(e.request).then(put)));
+  }
+});

@@ -63,15 +63,29 @@ function schedule(){
     step++;
   }
 }
+/* iPhone: let sound play even with the silent switch on, and unlock audio inside a real tap */
+let unlocked=false, silentEl=null;
+function unlock(){
+  if(!ensure()) return;
+  try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(_){}
+  if(ctx.state!=='running') ctx.resume();
+  if(unlocked) return; unlocked=true;
+  try{ const b=ctx.createBuffer(1,1,22050), s=ctx.createBufferSource(); s.buffer=b; s.connect(ctx.destination); s.start(0); }catch(_){}
+  try{ // a silent looping media element switches iOS to the "playback" audio session (ignores the mute switch)
+    silentEl=document.createElement('audio'); silentEl.setAttribute('x-webkit-airplay','deny'); silentEl.loop=true; silentEl.preload='auto';
+    silentEl.src='data/silence.mp3';
+    silentEl.volume=0.01; const p=silentEl.play(); if(p&&p.catch) p.catch(()=>{});
+  }catch(_){}
+}
 function startMusic(){
   if(!ensure()) return;
-  if(ctx.state==='suspended') ctx.resume();
+  unlock();
   if(started) return; started=true; nextT=ctx.currentTime+.08; step=0;
   timer=setInterval(schedule, 60); schedule();
 }
 /* SFX */
 function sfx(name){
-  if(!ensure()||muted) return; if(ctx.state==='suspended') ctx.resume();
+  if(!ensure()||muted) return; unlock();
   const t=ctx.currentTime+.01;
   if(name==='tap'){ pluck(f(H.A,5),t,.18,.5,sfxBus,4000); pluck(f(H.D,6),t+.05,.22,.4,sfxBus,4000); }
   else if(name==='pick'){ pluck(f(H.D,5),t,.2,.5,sfxBus,4200); pluck(f(H.Fs,5),t+.06,.2,.45,sfxBus,4200); pluck(f(H.A,5),t+.12,.3,.45,sfxBus,4200); }
@@ -85,7 +99,7 @@ function sfx(name){
 let clip=null;
 function yallah(){
   if(muted) return;
-  ensure(); if(ctx&&ctx.state==='suspended') ctx.resume();
+  ensure(); unlock();
   try{
     const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
     const ar=vs.find(v=>/^ar/i.test(v.lang));
@@ -102,5 +116,5 @@ function setMuted(m){
   listeners.forEach(fn=>fn(m));
 }
 if(window.speechSynthesis) try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices(); }catch(_){}
-document.addEventListener('visibilitychange',()=>{ if(!ctx) return; if(document.hidden) ctx.suspend(); else if(started) ctx.resume(); });
-export const Sound = { startMusic, sfx, yallah, setMuted, get muted(){return muted}, onChange:fn=>listeners.add(fn) };
+document.addEventListener('visibilitychange',()=>{ if(!ctx) return; if(document.hidden){ ctx.suspend(); if(silentEl) silentEl.pause(); } else if(started){ ctx.resume(); if(silentEl&&!muted) silentEl.play().catch(()=>{}); } });
+export const Sound = { get state(){return ctx?ctx.state:'none'}, get playing(){return started}, unlock, startMusic, sfx, yallah, setMuted, get muted(){return muted}, onChange:fn=>listeners.add(fn) };

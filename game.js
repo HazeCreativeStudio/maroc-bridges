@@ -1171,6 +1171,8 @@ $('#intro').addEventListener('click',()=>{ if(mode==='intro'&&intro.t>.6) goMapF
 $('#pickGo').addEventListener('click',startFromPick);
 /* sound: music starts on the first touch; soft tap on ordinary buttons; a toggle for those who want silence */
 const SPECIAL=new Set(['pickGo','start','next','cardX','sound']);
+/* iOS only unlocks audio on touchend/click, not pointerdown */
+['touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ if(!Sound.muted) Sound.startMusic(); },{capture:true,passive:true}));
 document.addEventListener('pointerdown',e=>{ if(!Sound.muted) Sound.startMusic(); const b=e.target.closest&&e.target.closest('button,a.btn,.tag3d');
   if(b&&!SPECIAL.has(b.id)&&!b.classList.contains('pick-card')&&!b.closest('.lm')) Sound.sfx('tap'); },{capture:true});
 const sb=$('#sound'); const syncSound=m=>{ sb.classList.toggle('muted',m); sb.setAttribute('aria-label',m?'Geluid aan':'Geluid uit'); };
@@ -1205,7 +1207,7 @@ function frame(now){
 /* letters of the logo */
 document.querySelectorAll('.logo [data-word]').forEach((el,wi)=>{ el.innerHTML=[...el.dataset.word].map((c,i)=>`<span class="ch" style="animation-delay:${(wi*5+i)*.07}s,${(wi*5+i)*.07+.8}s">${c}</span>`).join(''); });
 
-window.__mb={intro,world,state,pick,get mode(){return mode},get busy(){return busy},set speed(v){SPEED=v},camera,camTgt};
+window.__mb={Sound,intro,world,state,pick,get mode(){return mode},get busy(){return busy},set speed(v){SPEED=v},camera,camTgt};
 (async function boot(){
   try{ await document.fonts.load('40px "Lilita One"'); }catch(_){}
   await buildWorld();
