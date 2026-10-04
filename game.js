@@ -403,7 +403,9 @@ const CHARACTERS = [
   { id:"christa", name:"Christa", robe:"#8c9a33", trim:"#f6e2b3", skin:"#efc0a0", hair:"long", sweptBack:true, hairColor:"#7a4f31", hairLight:"#a97a4c",
     brows:"#6e4a30", eyes:"#6f7d55", lashes:true, mouth:"open", grin:1.1, freckles:true, earrings:"#e2a93a", earStud:true, pose:"thumbs", collar:"#556b3a", robeName:"Olijfgroene djellaba" },
   { id:"merel", name:"Merel", robe:"#f1e6d0", trim:"#c99a3a", skin:"#eab48f", hair:"ponytail", sleek:true, ponyFront:true, hairColor:"#a6845a", hairLight:"#c8a878",
-    brows:"#8a6a48", eyes:"#6b8db0", lashes:true, mouth:"open", grin:1.15, freckles:true, earrings:"#e2b04a", hoopSize:1.9, collar:"#f2d6d6", robeName:"Ivoorwitte djellaba" }
+    brows:"#8a6a48", eyes:"#6b8db0", lashes:true, mouth:"open", grin:1.15, freckles:true, earrings:"#e2b04a", hoopSize:1.9, collar:"#f2d6d6", robeName:"Ivoorwitte djellaba" },
+  { id:"jonathan", name:"Jonathan", robe:"#2a2a31", trim:"#e6b94a", skin:"#eebc9c", hair:"quiff", hairColor:"#8a7055", hairLight:"#a89276", sideColor:"#9b8b79",
+    brows:"#7a6248", eyes:"#64717d", mouth:"open", grin:1.15, beard:"stubble", beardColor:"#c9a78a", collar:"#ffffff", robeName:"Zwarte djellaba" }
 ];
 const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
 
@@ -531,6 +533,12 @@ function buildCharacter(c){
     for(const s of [-1,1]){ const w=ell(.27,.09,.2,hm,s*.2,.35,.3); w.rotation.z=-s*.42; w.rotation.x=-.5; head.add(w);
       for(let k=0;k<7;k++){ const y=.05-k*.13, x=s*(.46+.05*Math.sin(k*1.6)+k*.012), z=.02-k*.02; head.add(ell(.13,.1,.15,k>3?hl:hm,x,y,z)); } }
     for(let k=0;k<9;k++){ const y=-.05-k*.11, x=.25*Math.sin(k*1.3); head.add(ell(.3,.12,.16,k>4?hl:hm,x*.6,y,-.3-.02*k)); } }
+  else if(c.hair==='quiff'){
+    const hl=M(c.hairLight||c.hairColor,{r:.8}), sd=M(c.sideColor||c.hairColor,{r:.9});
+    const side=shell(Math.PI/2+.8,Math.PI*2-1.6,.55,.8,1.025); side.material=sd; head.add(side);
+    head.add(shell(0,Math.PI*2,0,.8,1.05));
+    [[-.18,.44,.2,.22,-.55,.3],[.08,.48,.22,.25,-.6,-.15],[.26,.4,.16,.2,-.5,-.45],[-.05,.52,.0,.22,-.3,.0],[.2,.48,-.05,.18,-.3,-.4],[-.25,.42,-.05,.18,-.3,.45]].forEach(([x,y,z,r,rx,rz],i)=>{
+      const q=ell(r,.09,r*.75,i%2?hl:hm,x,y,z); q.rotation.x=rx; q.rotation.z=rz; head.add(q); }); }
   else if(c.hair==='short'){ head.add(shell(0,Math.PI*2,0,1.15)); }
   else if(c.hair==='long'){
     const hl=M(c.hairLight||c.hairColor,{r:.8});
