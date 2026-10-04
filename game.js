@@ -375,6 +375,120 @@ function skyDome(top='#5fb8ec', mid='#a9dcf3', bot='#ffd9a8'){
 }
 
 /* ================================================================
+   PLAYER CHARACTERS (one per traveller, each in their own djellaba)
+   ================================================================ */
+const CHARACTERS = [
+  { id:"cock", name:"Cock", robe:"#2f5fd0", trim:"#f2c14e", skin:"#e8b496", hair:"baldtop", hairColor:"#dcdcdc",
+    brows:"#bdbdbd", glasses:{color:"#4f6f9f", shape:"round"}, collar:"#ffffff", smile:.9, robeName:"Koningsblauwe djellaba" }
+];
+const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
+
+function buildCharacter(c){
+  const g=new THREE.Group();
+  const skin=M(c.skin,{r:.55}), robe=M(c.robe,{r:.78}), robeD=M(shade(c.robe,-.12),{r:.8}), trim=M(c.trim,{r:.4,m:.25});
+  const white=M('#ffffff',{r:.25}), black=M('#1b1410',{r:.2});
+  // robe (djellaba) — a soft bell shape
+  const prof=[[0,.02],[.6,.02],[.63,.08],[.58,.36],[.5,.72],[.44,.98],[.38,1.14],[.26,1.24],[0,1.26]];
+  g.add(mesh(lathe(prof,40),robe,0,0,0));
+  const rAt=y=>{ for(let i=0;i<prof.length-1;i++){ const [r0,y0]=prof[i],[r1,y1]=prof[i+1]; if(y>=y0&&y<=y1) return lerp(r0,r1,(y-y0)/(y1-y0||1)); } return .3; };
+  ad(g,mesh(new THREE.TorusGeometry(.615,.025,8,48),trim,0,.1,0)).rotation.x=Math.PI/2;
+  // braided trim down the front + buttons
+  const front=[]; for(let y=.12;y<=1.16;y+=.08) front.push(new THREE.Vector3(0,y,rAt(y)+.006));
+  g.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(front),32,.022,8),trim));
+  for(let y=.82;y<=1.12;y+=.075) g.add(mesh(SPH(.026,10,8),trim,0,y,rAt(y)+.02));
+  // hood hanging at the back
+  const hood=ell(.3,.3,.17,robeD,0,1.06,-.33); g.add(hood);
+  ad(g,mesh(new THREE.TorusGeometry(.2,.02,6,24,Math.PI),trim,0,1.12,-.43)).rotation.z=Math.PI;
+  // neck and shirt collar
+  g.add(mesh(CYL(.13,.15,.16,16),skin,0,1.3,0));
+  for(const s of [-1,1]){ const col=mesh(RB(.16,.05,.11,.02,1),M(c.collar||'#ffffff',{r:.4}),s*.09,1.27,.13); col.rotation.z=s*.55; col.rotation.y=-s*.4; g.add(col); }
+  // arms (wide sleeves) — pivots at the shoulders
+  g.arms=[];
+  for(const s of [-1,1]){ const arm=new THREE.Group(); arm.position.set(s*.4,1.1,0); g.add(arm); g.arms.push(arm);
+    const sl=mesh(new THREE.CapsuleGeometry(.12,.38,6,14),robe,0,-.24,0); arm.add(sl);
+    arm.add(mesh(CYL(.17,.13,.14,18),robeD,0,-.48,0));
+    arm.add(mesh(SPH(.105,16,12),skin,0,-.6,0));
+    arm.rotation.z=s*.32; }
+  // babouches peeking out
+  for(const s of [-1,1]){ const b=ell(.11,.07,.2,M('#f4c430',{r:.55}),s*.17,.05,.42); g.add(b); }
+  // head
+  const head=new THREE.Group(); head.position.set(0,1.78,0); g.add(head); g.head=head;
+  head.add(ell(.5,.48,.47,skin,0,0,0));
+  for(const s of [-1,1]){ head.add(ell(.08,.12,.06,skin,s*.49,-.02,-.02)); head.add(ell(.07,.045,.02,M('#f08e86',{o:.55,r:.6}),s*.27,-.12,.41)); }
+  head.add(ell(.1,.1,.11,M(shade(c.skin,-.04),{r:.5}),0,-.04,.48));
+  // eyes
+  g.lids=[];
+  for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*.17,.06,.41); head.add(e);
+    e.add(ell(.1,.11,.06,white,0,0,0)); e.add(ell(.058,.064,.03,M(c.eyes||'#4a3424',{r:.3}),0,-.005,.045)); e.add(ell(.032,.036,.02,black,0,-.005,.06)); e.add(mesh(SPH(.016,8,6),white,.025,.03,.075));
+    const lid=ell(.106,.116,.07,skin,0,0,0); lid.scale.y=.01; lid.position.y=.07; e.add(lid); g.lids.push(lid);
+    const brow=mesh(new THREE.CapsuleGeometry(.022,.1,4,8),M(c.brows||c.hairColor,{r:.8}),s*.17,.21,.44); brow.rotation.z=Math.PI/2+s*.12; head.add(brow); }
+  // smile
+  const arc=Math.PI*.7*(c.smile??.9); const sm=mesh(new THREE.TorusGeometry(.12,.022,8,24,arc),M('#7a2f22',{r:.5}),0,-.2,.44); sm.rotation.z=Math.PI*1.5-arc/2; sm.rotation.x=-.25; head.add(sm);
+  // hair
+  const hm=M(c.hairColor,{r:.85});
+  const shell=(ps,pl,ts,tl,sc=1.035)=>{ const m=mesh(new THREE.SphereGeometry(.5,36,18,ps,pl,ts,tl),hm,0,0,0); m.scale.set(sc,.96*sc,.94*sc); m.material.side=THREE.DoubleSide; return m; };
+  if(c.hair==='baldtop'){ head.add(shell(Math.PI/2+1.05,Math.PI*2-2.1,1.0,.95)); }
+  else if(c.hair==='short'){ head.add(shell(0,Math.PI*2,0,1.15)); }
+  else if(c.hair==='long'){ head.add(shell(0,Math.PI*2,0,1.2)); head.add(ell(.42,.55,.2,hm,0,-.3,-.3)); }
+  else if(c.hair==='bun'){ head.add(shell(0,Math.PI*2,0,1.15)); head.add(mesh(SPH(.17,16,12),hm,0,.45,-.18)); }
+  else if(c.hair==='curly'){ for(let i=0;i<40;i++){ const th=Math.acos(1-Math.random()*1.05), ph=Math.random()*Math.PI*2; if(Math.sin(ph)>.55&&th>.6) continue; head.add(mesh(SPH(.11,10,8),hm,.52*Math.sin(th)*Math.cos(ph),.5*Math.cos(th),.5*Math.sin(th)*Math.sin(ph))); } }
+  if(c.beard){ const b=mesh(new THREE.SphereGeometry(.5,32,16,Math.PI/2-1.2,2.4,1.85,.9),M(c.beardColor||c.hairColor,{r:.9,ds:true}),0,0,0); b.scale.set(1.04,1,1.0); head.add(b); }
+  // glasses
+  if(c.glasses){ const gm=M(c.glasses.color,{r:.3,m:.4});
+    for(const s of [-1,1]){ head.add(mesh(new THREE.TorusGeometry(.135,.016,8,32),gm,s*.17,.06,.49));
+      const tc=new THREE.CatmullRomCurve3([new THREE.Vector3(s*.3,.07,.49),new THREE.Vector3(s*.43,.08,.34),new THREE.Vector3(s*.5,.07,.04)]);
+      head.add(mesh(new THREE.TubeGeometry(tc,12,.012,6),gm)); }
+    const br=mesh(CYL(.012,.012,.1,6),gm,0,.08,.5); br.rotation.z=Math.PI/2; head.add(br); }
+  return g;
+}
+
+/* portraits for the picker, the HUD and the street map */
+const PORTRAITS={};
+function renderPortraits(){
+  const r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+  r.setSize(320,320); r.setPixelRatio(1); r.toneMapping=THREE.ACESFilmicToneMapping;
+  const S=new THREE.Scene(); S.environment=ENV; S.environmentIntensity=.3; S.add(new THREE.HemisphereLight('#ffe9c9','#b9764a',1.6));
+  const d=new THREE.DirectionalLight('#fff1d8',3.0); d.position.set(2,5,6); S.add(d);
+  const cam=new THREE.PerspectiveCamera(28,1,.1,50);
+  CHARACTERS.forEach(c=>{ const g=buildCharacter(c); S.add(g);
+    cam.position.set(.55,1.95,3.4); cam.lookAt(0,1.62,0); r.render(S,cam); PORTRAITS[c.id]=r.domElement.toDataURL('image/png');
+    cam.position.set(1.1,1.5,5.6); cam.lookAt(0,1.12,0); r.render(S,cam); PORTRAITS[c.id+':full']=r.domElement.toDataURL('image/png');
+    S.remove(g); });
+  r.dispose(); r.forceContextLoss?.();
+}
+
+/* the picker scene: chosen traveller on a little rug pedestal */
+const pick = { scene:new THREE.Scene(), t:0, model:null, pop:1 };
+(function buildPick(){
+  const S=pick.scene; S.environment=ENV; S.environmentIntensity=.3; S.add(skyDome('#5fb8ec','#a9dcf3','#ffcf98'));
+  const sun=addLights(S,{range:4}); sun.position.set(-3,8,6);
+  S.add(mesh(lathe([[0,0],[1.5,0],[1.62,-.12],[1.62,-.3],[1.45,-.42],[0,-.44]],48),M('#eeb06a',{r:.95}),0,0,0));
+  S.add(mesh(lathe([[1.44,-.41],[1.1,-1.0],[.5,-1.4],[0,-1.5]],40),M('#c66e45',{r:.95}),0,0,0));
+  const rug=mesh(CYL(1.25,1.25,.04,48),M('#ffffff',{map:RUG_TEX,r:.95}),0,.02,0); S.add(rug);
+  const p1=buildPalm(2.6,.35); p1.position.set(-1.25,0,-.75); S.add(p1); pick.palm=p1;
+  const l1=buildLantern('#ff9f43'); l1.scale.setScalar(.7); l1.position.set(1.05,0,.45); S.add(l1);
+  const l2=buildLantern('#2ec4b6'); l2.scale.setScalar(.55); l2.position.set(1.25,0,-.15); S.add(l2);
+  pick.slot=new THREE.Group(); S.add(pick.slot);
+  [[-4,3.2,-6,1.1],[4.5,4,-8,1.3]].forEach(([x,y,z,s])=>{ const c=buildCloud(); c.position.set(x,y,z); c.scale.setScalar(s); S.add(c); });
+})();
+function setPickModel(c){
+  pick.slot.clear(); const m=buildCharacter(c); pick.slot.add(m); pick.model=m; pick.pop=0; pick.t=0;
+}
+function updatePick(dt){
+  pick.t+=dt; const t=pick.t;
+  const asp=innerWidth/innerHeight; const dist=asp<1?9.6:6.2;
+  camera.position.set(Math.sin(.15)*dist, 2.6, Math.cos(.15)*dist); camTgt.set(0,asp<1?.55:.95,0); look();
+  pick.pop=Math.min(1,pick.pop+dt*1.8); const s=E.back(pick.pop); if(pick.model){ pick.model.scale.set(s*(1+Math.sin(t*2.4)*.012), s*(1-Math.sin(t*2.4)*.012), s);
+    pick.model.rotation.y=Math.sin(t*.6)*.45; animChar(pick.model,t,true); }
+  if(pick.palm) pick.palm.crown.rotation.z=Math.sin(t*1.3)*.05;
+}
+function animChar(m,t,wave){
+  if(m.arms){ if(wave){ m.arms[1].rotation.z=2.5+Math.sin(t*7)*.32; m.arms[1].rotation.x=.15; } m.arms[0].rotation.z=-.32+Math.sin(t*1.8)*.04; }
+  if(m.head){ m.head.rotation.z=Math.sin(t*1.6)*.06; m.head.rotation.y=Math.sin(t*.9)*.12; }
+  const bl=(t%3.8)>3.66; m.lids.forEach(l=>l.scale.y=bl?1:.01);
+}
+
+/* ================================================================
    INTRO SCENE
    ================================================================ */
 const intro = { scene:new THREE.Scene(), t:0, props:[], started:false };
@@ -393,6 +507,7 @@ const intro = { scene:new THREE.Scene(), t:0, props:[], started:false };
   // the van
   const van=buildVan(); van.position.set(0,0,.4); S.add(van); intro.van=van;
   // camel
+  intro.charSlot=new THREE.Group(); intro.charSlot.position.set(-1.0,0,1.95); intro.charSlot.rotation.y=.35; intro.charSlot.userData.base=1.15; S.add(intro.charSlot); intro.props.push({o:intro.charSlot,delay:1.3,base:1.15});
   const camel=buildCamel(); camel.position.set(2.7,0,-.7); camel.rotation.y=Math.PI*0.85; camel.scale.setScalar(.95); S.add(camel); intro.camel=camel;
   intro.props.push({o:camel,delay:1.55,base:.95});
   // market corner
@@ -445,6 +560,7 @@ function updateIntro(dt){
   intro.props.forEach(p=>{ const b=p.base??1; const kk=clamp((t-p.delay)/.55,0,1); p.o.scale.setScalar(b*E.back(kk)); p.o.visible=kk>0;
     if(p.sway&&p.o.crown) p.o.crown.rotation.z=Math.sin(t*1.3+p.delay*3)*.05; });
   // camel life
+  if(intro.charModel) animChar(intro.charModel,t,t>1.9);
   const c=intro.camel; c.head.rotation.z=Math.sin(t*1.4)*.08; c.head.rotation.y=Math.sin(t*.7)*.2; c.tail.rotation.x=Math.sin(t*3)*.35;
   const bl=(t%3.4)>3.25; c.lids.forEach(l=>l.scale.y=bl?1:.02);
   intro.lanterns.forEach((l,i)=>l.rotation.y=t*.3+i);
@@ -636,9 +752,9 @@ function renderIcons(){
 /* ================================================================
    STATE / FLOW
    ================================================================ */
-let mode='intro', busy=false, clockT=0, SPEED=1;
+let mode='pick', busy=false, clockT=0, SPEED=1, player=null;
 const state={ started:false, cur:0, visited:new Set() };
-let activeScene=intro.scene;
+let activeScene=pick.scene;
 
 function iris(shut){ return new Promise(r=>{ const el=$('#iris'); el.classList.toggle('shut',shut); setTimeout(r,580); }); }
 function showHud(on){ $('#hud').hidden=!on; $('#labels').hidden=!on; }
@@ -646,7 +762,7 @@ function banner(small,big,sub){ const b=$('#banner'); if(!small){b.hidden=true;r
 function setStartLabel(){ $('#start span').textContent = state.started ? 'VERDER' : 'START'; $('#hint').textContent = state.started ? `Ga verder in ${STAYS[state.cur].place}, of tik op een bestemming` : 'Tik op een bestemming, of…'; }
 
 async function goMapFromIntro(){
-  if(busy) return; busy=true;
+  if(busy) return; busy=true; state.introDone=true; refreshPlayer();
   $('#skip').classList.remove('on');
   await iris(true);
   $('#intro').hidden=true; mode='map'; activeScene=world.scene;
@@ -665,6 +781,38 @@ async function backToMap(fromLoc=true){
   await iris(false); showHud(true);
   const o=ovr(); await camTo(o.pos,o.T,1.6,.6);
   busy=false;
+}
+
+/* ---------- player choice ---------- */
+function refreshPlayer(){ if(!player) return; const b=$('#player'); b.querySelector('img').src=PORTRAITS[player.id]; b.querySelector('span').textContent=player.name; b.style.setProperty('--c',shade(player.robe,.32)); }
+function choosePlayer(id){
+  player=CHARACTERS.find(c=>c.id===id)||CHARACTERS[0]; try{ localStorage.setItem('mb_player',player.id); }catch(_){}
+  document.querySelectorAll('.pick-card').forEach(el=>el.classList.toggle('on',el.dataset.id===player.id));
+  const n=$('#pickName'); n.textContent=player.name; n.style.animation='none'; void n.offsetWidth; n.style.animation='';
+  $('#pickRobe').innerHTML=`<i style="background:${player.robe}"></i>${player.robeName||'Djellaba'}`;
+  $('#pickGo span').textContent=`SPEEL ALS ${player.name.toUpperCase()}`;
+  setPickModel(player);
+}
+function buildPicker(){
+  const g=$('#pickGrid');
+  g.innerHTML=CHARACTERS.map(c=>`<button class="pick-card" data-id="${c.id}" style="--c:${shade(c.robe,.3)}"><i class="av"><img src="${PORTRAITS[c.id]}" alt=""></i><span>${c.name}</span></button>`).join('');
+  g.querySelectorAll('.pick-card').forEach(b=>b.addEventListener('click',()=>choosePlayer(b.dataset.id)));
+  let saved=null; try{ saved=localStorage.getItem('mb_player'); }catch(_){}
+  choosePlayer(saved||CHARACTERS[0].id);
+}
+async function startFromPick(){
+  if(busy||mode!=='pick') return; busy=true;
+  await iris(true); $('#pick').hidden=true; refreshPlayer();
+  intro.charSlot.clear(); intro.charModel=buildCharacter(player); intro.charSlot.add(intro.charModel);
+  if(!state.introDone){ mode='intro'; activeScene=intro.scene; intro.t=0; $('#intro').hidden=false; busy=false; await iris(false); return; }
+  mode='map'; activeScene=world.scene; refreshLabelState(); setStartLabel();
+  const o=ovr(); camera.position.copy(o.pos); camTgt.copy(o.T); look();
+  await iris(false); showHud(true); busy=false;
+}
+async function backToPick(){
+  if(busy||mode!=='map') return; busy=true; await iris(true);
+  showHud(false); mode='pick'; activeScene=pick.scene; $('#pick').hidden=false; setPickModel(player);
+  await iris(false); busy=false;
 }
 
 /* start: fly from the Netherlands */
@@ -753,7 +901,7 @@ async function homeFlight(){
   world.van.visible=false;
   banner('Dag 8 · Vlucht','Marrakech → Amsterdam','Tot de volgende keer, Marokko!');
   await flight(lmPos(0), NL_POS, false);
-  banner(); confetti(120);
+  banner(); confetti(120); $('#endTitle').textContent=`Reis voltooid, ${player.name}!`;
   $('#end').hidden=false; busy=false; mode='end';
 }
 
@@ -793,7 +941,7 @@ function ensureMap(){
     lmap.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');
     lmap.once('idle',()=>document.querySelectorAll('#locmap .maplibregl-ctrl-attrib').forEach(a=>a.classList.remove('maplibregl-compact-show')));
     const el=document.createElement('div'); el.className='lm';
-    el.innerHTML='<i class="lm-sh"></i><div class="lm-in"><img alt=""><span></span></div><div class="lm-hint">Tik op je slaapplek</div>';
+    el.innerHTML='<i class="lm-sh"></i><div class="lm-in"><div class="lm-row"><img class="lm-char" alt=""><img class="lm-ico" alt=""></div><span></span></div><div class="lm-hint">Tik op je slaapplek</div>';
     el.addEventListener('click',e=>{e.stopPropagation(); openCard(state.cur);});
     lmarker=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([s.lng,s.lat]).addTo(lmap);
     await new Promise(r=>lmap.loaded()?r():lmap.once('load',r));
@@ -808,7 +956,7 @@ async function openLoc(i){
   lmap.resize();
   lmap.jumpTo({center:[s.lng,s.lat],zoom:13.2,pitch:20,bearing:10});
   lmarker.setLngLat([s.lng,s.lat]);
-  const el=lmarker.getElement(); el.querySelector('img').src=ICONS[s.id]; el.querySelector('span').textContent=s.stay;
+  const el=lmarker.getElement(); el.querySelector('.lm-ico').src=ICONS[s.id]; el.querySelector('.lm-char').src=PORTRAITS[player.id+':full']; el.querySelector('span').textContent=s.stay;
   const hint=el.querySelector('.lm-hint'); hint.hidden=state.visited.has(i)||state.seenCard?.has(i); hint.style.animation='none'; void hint.offsetWidth; hint.style.animation='';
   const chip=$('#chip'); chip.querySelector('img').src=ICONS[s.id]; chip.querySelector('small').textContent=`Level ${i+1} van 5 · ${s.nights}`; chip.querySelector('b').textContent=s.place;
   const last=i===STAYS.length-1;
@@ -883,6 +1031,8 @@ function tapAt(x,y){
    BUTTONS
    ================================================================ */
 $('#intro').addEventListener('click',()=>{ if(mode==='intro'&&intro.t>.6) goMapFromIntro(); });
+$('#pickGo').addEventListener('click',startFromPick);
+$('#player').addEventListener('click',backToPick);
 $('#start').addEventListener('click',()=>{ if(mode!=='map'||busy) return; if(!state.started) startJourney(); else jumpTo(state.cur); });
 $('#toMap').addEventListener('click',()=>{ if(mode==='loc'&&!busy) backToMap(); });
 $('#next').addEventListener('click',()=>{ if(mode==='loc'&&!busy) driveNext(); });
@@ -901,7 +1051,8 @@ let last=performance.now();
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000)*SPEED; last=now; clockT+=dt;
   stepTweens(dt);
-  if(mode==='intro') updateIntro(dt);
+  if(mode==='pick') updatePick(dt);
+  else if(mode==='intro') updateIntro(dt);
   else if(world.sun) updateWorld(dt);
   if(mode!=='loc'){ renderer.render(activeScene,camera); if(mode==='map'||mode==='end') placeLabels(); }
   requestAnimationFrame(frame);
@@ -910,12 +1061,12 @@ function frame(now){
 /* letters of the logo */
 document.querySelectorAll('.logo [data-word]').forEach((el,wi)=>{ el.innerHTML=[...el.dataset.word].map((c,i)=>`<span class="ch" style="animation-delay:${(wi*5+i)*.07}s,${(wi*5+i)*.07+.8}s">${c}</span>`).join(''); });
 
-window.__mb={intro,world,state,get mode(){return mode},get busy(){return busy},set speed(v){SPEED=v},camera,camTgt};
+window.__mb={intro,world,state,pick,get mode(){return mode},get busy(){return busy},set speed(v){SPEED=v},camera,camTgt};
 (async function boot(){
   try{ await document.fonts.load('40px "Lilita One"'); }catch(_){}
   await buildWorld();
-  renderIcons();
-  renderer.compile(intro.scene,camera); renderer.compile(world.scene,camera);
+  renderIcons(); renderPortraits(); buildPicker();
+  renderer.compile(pick.scene,camera); renderer.compile(intro.scene,camera); renderer.compile(world.scene,camera);
   $('#loading').classList.add('off'); setTimeout(()=>$('#loading').remove(),500);
   requestAnimationFrame(t=>{last=t;frame(t);});
   ensureMap().catch(()=>{});

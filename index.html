@@ -19,8 +19,21 @@
 <canvas id="gl"></canvas>
 <div id="labels" hidden></div>
 
+<!-- CHARACTER PICKER -->
+<section id="pick" class="screen">
+  <header class="pick-top">
+    <div class="mini-logo"><b>MAROC</b> <i>BRIDGES</i></div>
+    <h1>Kies je karakter</h1>
+  </header>
+  <footer class="pick-bottom">
+    <div class="pick-name"><b id="pickName"></b><small id="pickRobe"></small></div>
+    <div class="pick-grid" id="pickGrid"></div>
+    <button class="btn big" id="pickGo"><span>SPEEL</span></button>
+  </footer>
+</section>
+
 <!-- INTRO -->
-<section id="intro" class="screen">
+<section id="intro" class="screen" hidden>
   <div class="logo" id="logo" aria-label="Maroc Bridges">
     <svg class="star" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 2l11.5 22.2L85.4 14.6 75.8 38.5 98 50 75.8 61.5 85.4 85.4 61.5 75.8 50 98 38.5 75.8 14.6 85.4 24.2 61.5 2 50 24.2 38.5 14.6 14.6 38.5 24.2z"/></svg>
     <div class="l1" data-word="MAROC"></div>
@@ -32,6 +45,7 @@
 
 <!-- WORLD MAP HUD -->
 <section id="hud" class="screen" hidden>
+  <button class="player" id="player" aria-label="Ander karakter kiezen"><img alt=""><span></span></button>
   <header class="hud-top">
     <div class="mini-logo"><b>MAROC</b> <i>BRIDGES</i></div>
     <p class="hud-sub">7 nachten · 5 bestemmingen</p>
@@ -72,7 +86,7 @@
 <section id="end" class="screen" hidden>
   <div class="end-card">
     <div class="stars"><i>★</i><i>★</i><i>★</i></div>
-    <h2>Reis voltooid!</h2>
+    <h2 id="endTitle">Reis voltooid!</h2>
     <p>7 nachten · 5 bestemmingen · ±1.180 km door Marokko</p>
     <p class="shukran">Shukran &amp; tot de volgende reis</p>
     <button class="btn" id="again"><span>Opnieuw spelen</span></button>

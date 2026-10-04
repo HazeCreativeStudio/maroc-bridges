@@ -182,3 +182,29 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 @media (prefers-reduced-motion:reduce){
   .btn.big,.lm-in,.lm-sh,.tag3d.here{animation:none}
 }
+
+/* ---------- character picker ---------- */
+#pick{pointer-events:none}
+.pick-top{position:absolute;left:0;right:0;top:0;padding:calc(var(--safe-t) + 14px) 16px 0;text-align:center;pointer-events:none}
+.pick-top h1{margin:10px auto 0;display:table;padding:6px 16px;border-radius:99px;background:var(--cream);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink-2);font:400 20px/1.1 var(--game);color:var(--ink)}
+.pick-bottom{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 16px calc(var(--safe-b) + 22px);pointer-events:none}
+.pick-bottom > *{pointer-events:auto}
+.pick-name{display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+.pick-name b{font:400 44px/1 var(--game);color:#fff;paint-order:stroke fill;-webkit-text-stroke:.1em var(--ink);text-shadow:0 .1em 0 var(--ink),0 .16em .2em rgba(40,12,0,.35);letter-spacing:.03em;animation:pop .45s cubic-bezier(.3,1.6,.5,1) both}
+.pick-name small{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;background:var(--cream);border:2.5px solid var(--ink);font:900 13px var(--ui)}
+.pick-name small i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink)}
+.pick-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:440px}
+.pick-card{display:flex;flex-direction:column;align-items:center;gap:3px;width:66px}
+.pick-card .av{width:62px;height:62px;border-radius:50%;border:3px solid var(--ink);background:var(--c,#ffe3b8);overflow:hidden;box-shadow:0 4px 0 var(--ink-2);transition:transform .15s}
+.pick-card .av img{width:100%;height:100%;object-fit:cover;transform:scale(1.15) translateY(6%)}
+.pick-card > span{font:400 12.5px/1.1 var(--game);color:#fff;paint-order:stroke fill;-webkit-text-stroke:.18em var(--ink);white-space:nowrap}
+.pick-card.on .av{transform:translateY(-4px) scale(1.08);box-shadow:0 0 0 4px var(--gold),0 8px 0 var(--ink-2)}
+.player{position:absolute;left:12px;top:calc(var(--safe-t) + 12px);z-index:2;display:flex;align-items:center;gap:6px;padding:3px 12px 3px 3px;border-radius:99px;background:var(--cream);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink-2);pointer-events:auto}
+.player img{width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);background:var(--c,#ffe3b8);object-fit:cover}
+.player span{font:400 15px var(--game)}
+.player:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink-2)}
+@media (max-width:520px){ #hud .hud-top{padding-top:calc(var(--safe-t) + 66px)} }
+.lm-in .lm-row{display:flex;align-items:flex-end}
+.lm-in .lm-char{width:62px;height:62px;margin-right:-22px;margin-bottom:6px;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(40,15,0,.35));animation:hop 1s ease-in-out infinite reverse}
+
+#pickGo{font-size:27px;padding:12px 30px 14px;min-width:0}
