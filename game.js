@@ -888,9 +888,9 @@ function renderIcons(){
 /* ================================================================
    STATE / FLOW
    ================================================================ */
-let mode='pick', busy=false, clockT=0, SPEED=1, player=null;
+let mode='opening', busy=false, clockT=0, SPEED=1, player=null;
 const state={ started:false, cur:0, visited:new Set() };
-let activeScene=pick.scene;
+let activeScene=world.scene;
 
 function iris(shut){ return new Promise(r=>{ const el=$('#iris'); el.classList.toggle('shut',shut); setTimeout(r,580); }); }
 function showHud(on){ $('#hud').hidden=!on; $('#labels').hidden=!on; }
@@ -918,6 +918,20 @@ async function backToMap(fromLoc=true){
   const o=ovr(); await camTo(o.pos,o.T,1.6,.6);
   busy=false;
 }
+
+/* ---------- opening: the plane flies from the Netherlands to Morocco ---------- */
+let openingSkipped=false;
+async function opening(){
+  busy=true; $('#pick').hidden=true;
+  const o=ovr(); const nlView=NL_POS.clone().addScaledVector(o.dir,3.4).add(new THREE.Vector3(0,.7,0));
+  camera.position.copy(nlView); camTgt.copy(NL_POS); look();
+  banner('Maroc Bridges','Op weg naar Marokko!','Tik om over te slaan');
+  await flight(NL_POS, lmPos(0), true);
+  banner(); world.plane.visible=false;
+  if(!openingSkipped) await wait(400);
+  await iris(true); $('#pick').hidden=false; mode='pick'; activeScene=pick.scene; busy=false; await iris(false);
+}
+document.addEventListener('click',()=>{ if(mode==='opening'&&!openingSkipped){ openingSkipped=true; tweens.forEach(tw=>tw.t=tw.dur); } },{capture:true});
 
 /* ---------- player choice ---------- */
 function refreshPlayer(){ if(!player) return; const b=$('#player'); b.querySelector('img').src=PORTRAITS[player.id]; b.querySelector('span').textContent=player.name; b.style.setProperty('--c',shade(player.robe,.32)); }
@@ -978,7 +992,7 @@ async function flight(from, to, landing){
   await tween(7.2, (k)=>{
     curve.getPointAt(k,tmp); curve.getTangentAt(Math.min(k,.999),tan);
     pl.position.copy(tmp);
-    m4.lookAt(new THREE.Vector3(),tan,new THREE.Vector3(0,1,0)); q.setFromRotationMatrix(m4); pl.quaternion.copy(q); pl.rotateY(-Math.PI/2);
+    m4.lookAt(new THREE.Vector3(),tan,new THREE.Vector3(0,1,0)); q.setFromRotationMatrix(m4); pl.quaternion.copy(q); pl.rotateY(Math.PI/2);
     pl.rotateX(Math.sin(k*Math.PI*2)*.18);
     const lift=Math.sin(k*Math.PI)*4.5;
     const want=tmp.clone().add(off).addScaledVector(o.dir,lift).add(new THREE.Vector3(0,lift*.5,0));
@@ -1006,7 +1020,7 @@ async function jumpTo(i){
 
 /* drive the van to the next stay */
 async function driveNext(){
-  if(busy) return; busy=true; Sound.yallah();
+  if(busy) return; busy=true; Sound.sfx('drive');
   const from=state.cur; const last=from===STAYS.length-1; const to=last?0:from+1;
   const legId=last?'home':STAYS[to].id; const leg=LEGS[legId];
   await iris(true);
@@ -1259,6 +1273,7 @@ window.__mb={Sound,intro,world,state,pick,get mode(){return mode},get busy(){ret
   renderer.compile(pick.scene,camera); renderer.compile(intro.scene,camera); renderer.compile(world.scene,camera);
   $('#loading').classList.add('off'); setTimeout(()=>$('#loading').remove(),500);
   requestAnimationFrame(t=>{last=t;frame(t);});
+  opening();
   ensureMap().catch(()=>{});
   if('serviceWorker' in navigator && location.hostname.endsWith('github.io')) navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();

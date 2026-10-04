@@ -1,4 +1,4 @@
-/* MAROC BRIDGES — sound: a light looping Moroccan game tune, click accents, and "yallah yallah" */
+/* MAROC BRIDGES — sound: a light looping Moroccan game tune and click accents */
 const AC = window.AudioContext || window.webkitAudioContext;
 let ctx=null, master=null, musicBus=null, sfxBus=null, started=false, timer=null;
 let muted = false; try{ muted = localStorage.getItem('mb_muted')==='1'; }catch(_){}
@@ -71,7 +71,7 @@ function unlock(){
   try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(_){}
   if(ctx.state!=='running') ctx.resume().catch(()=>{});
   if(silentEl&&silentEl.paused&&!muted) silentEl.play().catch(()=>{});
-  if(unlocked) return; unlocked=true; loadYallah();
+  if(unlocked) return; unlocked=true;
   try{ const b=ctx.createBuffer(1,1,22050), s=ctx.createBufferSource(); s.buffer=b; s.connect(ctx.destination); s.start(0); }catch(_){}
   try{ // a silent looping media element switches iOS to the "playback" audio session (ignores the mute switch)
     silentEl=document.createElement('audio'); silentEl.setAttribute('x-webkit-airplay','deny'); silentEl.loop=true; silentEl.preload='auto';
@@ -95,15 +95,19 @@ function sfx(name){
   else if(name==='arrive'){ [H.D,H.A,H.D+12,H.Fs+12].forEach((n,i)=>pluck(f(n,5),t+i*.1,.5,.5,sfxBus,4500)); drum('D',t); drum('T',t+.2); drum('D',t+.3); }
   else if(name==='open'){ pluck(f(H.G,5),t,.25,.45,sfxBus,3800); pluck(f(H.Bb,5),t+.07,.3,.4,sfxBus,3800); }
   else if(name==='close'){ pluck(f(H.Bb,5),t,.2,.4,sfxBus,3500); pluck(f(H.G,5),t+.06,.25,.35,sfxBus,3500); }
+  else if(name==='drive'){ // engine starts, revs, two cheerful honks
+    const o=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+    o.type='sawtooth'; o2.type='square'; lp.type='lowpass'; lp.frequency.value=700;
+    o.frequency.setValueAtTime(38,t); o.frequency.linearRampToValueAtTime(30,t+.25); o.frequency.exponentialRampToValueAtTime(95,t+.9); o.frequency.exponentialRampToValueAtTime(60,t+1.4);
+    o2.frequency.setValueAtTime(19,t); o2.frequency.exponentialRampToValueAtTime(48,t+.9); o2.frequency.exponentialRampToValueAtTime(30,t+1.4);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.35,t+.05); g.gain.setValueAtTime(.35,t+1.1); g.gain.exponentialRampToValueAtTime(.001,t+1.6);
+    const lfo=ctx.createOscillator(), lg=ctx.createGain(); lfo.frequency.value=22; lg.gain.value=.15; lfo.connect(lg); lg.connect(g.gain);
+    o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(sfxBus); [o,o2,lfo].forEach(x=>{x.start(t); x.stop(t+1.7);});
+    [1.45,1.68].forEach(d=>{ [415,523].forEach(fq=>{ const h=ctx.createOscillator(), hg=ctx.createGain(); h.type='square'; h.frequency.value=fq;
+      const hf=ctx.createBiquadFilter(); hf.type='lowpass'; hf.frequency.value=1800; hg.gain.setValueAtTime(0,t+d); hg.gain.linearRampToValueAtTime(.12,t+d+.01); hg.gain.setValueAtTime(.12,t+d+.14); hg.gain.linearRampToValueAtTime(0,t+d+.17);
+      h.connect(hf); hf.connect(hg); hg.connect(sfxBus); h.start(t+d); h.stop(t+d+.2); }); });
+    duck(2); }
   else if(name==='win'){ [0,4,7,12,16,19,24].forEach((n,i)=>pluck(f(H.D+n,4),t+i*.09,.6,.5,sfxBus,5000)); [0,.18,.36,.54].forEach(d=>drum(d%.36?'T':'D',t+d)); }
-}
-/* "yallah yallah": played through the same audio engine as the music, so it never steals the phone's audio */
-let yBuf=null, yLoading=null;
-function loadYallah(){ if(yBuf||yLoading||!ensure()) return yLoading; yLoading=fetch('data/yalla.mp3').then(r=>r.arrayBuffer()).then(b=>new Promise((res,rej)=>ctx.decodeAudioData(b,res,rej))).then(buf=>yBuf=buf).catch(()=>null); return yLoading; }
-async function yallah(){
-  if(muted||!ensure()) return; unlock();
-  await loadYallah(); if(!yBuf) return;
-  const s=ctx.createBufferSource(); s.buffer=yBuf; const g=ctx.createGain(); g.gain.value=1.6; s.connect(g); g.connect(sfxBus); s.start(ctx.currentTime+.02); duck(yBuf.duration+.2);
 }
 function duck(sec){ if(!musicBus) return; const t=ctx.currentTime; musicBus.gain.cancelScheduledValues(t); musicBus.gain.setTargetAtTime(.05,t,.05); musicBus.gain.setTargetAtTime(.16,t+sec,.3); }
 function setMuted(m){
@@ -113,4 +117,4 @@ function setMuted(m){
   listeners.forEach(fn=>fn(m));
 }
 document.addEventListener('visibilitychange',()=>{ if(!ctx) return; if(document.hidden){ ctx.suspend(); if(silentEl) silentEl.pause(); } else if(started){ ctx.resume(); if(silentEl&&!muted) silentEl.play().catch(()=>{}); } });
-export const Sound = { get state(){return ctx?ctx.state:'none'}, get playing(){return started}, unlock, startMusic, sfx, yallah, setMuted, get muted(){return muted}, onChange:fn=>listeners.add(fn) };
+export const Sound = { get state(){return ctx?ctx.state:'none'}, get playing(){return started}, unlock, startMusic, sfx, setMuted, get muted(){return muted}, onChange:fn=>listeners.add(fn) };
