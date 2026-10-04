@@ -34,7 +34,7 @@ const STAYS = [
     blurb:"Een familiehuis uit de jaren veertig, gebouwd door de vader van de huidige eigenaar, op 200 meter van de poort van de ksar, aan de overkant van de rivier. Elke kamer kijkt uit op de ksar of het zwembad. Het zwembad wordt gevoed door bronwater, er is een hammam op houtvuur en de groenten komen uit de eigen tuin.",
     when:"Zonsondergang vanaf het terras, met de ksar recht voor je.",
     tip:"Klim vroeg in de ochtend door de steegjes van de ksar naar de oude graanschuur (agadir) helemaal bovenop de heuvel. Voordat de dagjesmensen komen heb je het uitzicht over de rivier en de Ounila-vallei vaak helemaal voor jezelf." },
-  { id:"dades", place:"Boumalne Dadès", stay:"Sahara Stars Dades", nights:"Nacht 4–5", n:2, gq:"Riad Sahara Stars Dades, Boumalne Dades", z:15.6, lat:31.362036, lng:-5.911116,
+  { id:"dades", place:"Boumalne Dadès", stay:"Sahara Stars Dades", nights:"Nacht 4–5", n:2, gurl:"https://maps.google.com/maps?q=Riad+Sahara+Stars+Dades,+Boumalne+Dades,+Marokko&ftid=0xdbcc933f963ddaf:0x1b1a831f465e1a06", z:15.6, lat:31.39219, lng:-5.99248,
     photos:["s_dades"],
     blurb:"Een hotel in riadstijl in de wijk Jida, aan de rand van Boumalne, op zo'n 13 minuten lopen van het begin van de Dadès-kloof. Buitenzwembad, tuin, terras, een bar-lounge en twee restaurants.",
     when:"Vroeg ontbijt op je kloofdag.",
