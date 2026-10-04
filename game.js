@@ -24,27 +24,27 @@ const IMG = k => `img/${k}.jpg`;
 
 /* ---------------- trip data ---------------- */
 const STAYS = [
-  { id:"marrakech", place:"Marrakech", stay:"Riad Imilchil", nights:"Nacht 1–2", n:2, lat:31.6200, lng:-7.9802,
+  { id:"marrakech", place:"Marrakech", stay:"Riad Imilchil", nights:"Nacht 1–2", n:2, lat:31.622708, lng:-7.980829,
     photos:["s_marrakech","s_marrakech_2","s_marrakech_3"],
     blurb:"Een kleine riad in het rustigere zuidelijke deel van de medina, een paar steegjes van het Bahia-paleis. De kamers combineren Marokkaans vakwerk met strakke, moderne lijnen. Er is een klein binnenzwembad en het ontbijt wordt op het dakterras geserveerd. Het Jemaa el-Fnaa-plein ligt op zo'n 15 minuten lopen.",
     when:"Ontbijt op het dakterras, 7:00–10:00.",
     tip:"Vraag de gastheren of ze je de eerste avond terugbrengen. In het donker lijken alle steegjes rond Jnane Ben Chegra op elkaar." },
-  { id:"aitbenhaddou", place:"Aït Benhaddou", stay:"Dar Mouna", nights:"Nacht 3", n:1, lat:31.04368, lng:-7.12954,
+  { id:"aitbenhaddou", place:"Aït Benhaddou", stay:"Dar Mouna", nights:"Nacht 3", n:1, z:15, lat:31.062310, lng:-7.126352,
     photos:["s_ait"],
     blurb:"Een familiehuis uit de jaren veertig, gebouwd door de vader van de huidige eigenaar, op 200 meter van de poort van de ksar, aan de overkant van de rivier. Elke kamer kijkt uit op de ksar of het zwembad. Het zwembad wordt gevoed door bronwater, er is een hammam op houtvuur en de groenten komen uit de eigen tuin.",
     when:"Zonsondergang vanaf het terras, met de ksar recht voor je.",
     tip:"Boek de kookles voor de middag van aankomst en drink daarna thee op het terras terwijl de ksar oplicht." },
-  { id:"dades", place:"Boumalne Dadès", stay:"Sahara Stars Dades", nights:"Nacht 4–5", n:2, z:15.6, lat:31.39219, lng:-5.99248,
+  { id:"dades", place:"Boumalne Dadès", stay:"Sahara Stars Dades", nights:"Nacht 4–5", n:2, z:15.6, lat:31.362036, lng:-5.911116,
     photos:["s_dades"],
     blurb:"Een hotel in riadstijl in de wijk Jida, aan de rand van Boumalne, op zo'n 13 minuten lopen van het begin van de Dadès-kloof. Buitenzwembad, tuin, terras, een bar-lounge en twee restaurants.",
     when:"Vroeg ontbijt op je kloofdag.",
     tip:"Vraag op dag 5 om ontbijt om 7:30 en vertrek om 8:30: dan is de weg door de kloof rustig en valt er zacht licht op de rotswanden." },
-  { id:"ergchebbi", place:"Erg Chebbi", stay:"Madu Luxury Camp", nights:"Nacht 6", n:1, z:13.6, lat:31.1250, lng:-3.9860,
+  { id:"ergchebbi", place:"Erg Chebbi", stay:"Madu Luxury Camp", nights:"Nacht 6", n:1, z:13.5, lat:31.190968, lng:-3.943228,
     photos:["s_erg"],
     blurb:"Het woestijnkamp van Riad Madu bij Hassilabied. Acht Berbertenten tussen de duinen, elk met een king-, queen- of twinbed en een eigen terrasje, ongeveer een uur per kameel vanaf de riad.",
     when:"Inchecken 14:00–16:30, zodat je bij zonsondergang in het zand zit.",
     tip:"Laat de grote tassen achter bij Riad Madu en neem een zachte overnachtingstas mee. Van november tot maart zijn de nachten koud: vraag om extra dekens." },
-  { id:"ouarzazate", place:"Ouarzazate", stay:"La Terrasse des Délices", nights:"Nacht 7", n:1, z:15, lat:30.8215, lng:-6.9480,
+  { id:"ouarzazate", place:"Ouarzazate", stay:"La Terrasse des Délices", nights:"Nacht 7", n:1, z:15.4, lat:30.918317, lng:-6.963771,
     photos:["s_ouarz"], credit:"Foto ter illustratie: de oase van Fint · Fraguando, CC BY-SA 4.0",
     blurb:"Een auberge in Douar Taharbilte in de oase van Fint, 12 km buiten Ouarzazate. Kleine terrassen en salons, een zwembad en een panoramaterras boven de palmen. De keuken kookt traditionele gerechten uit Zuid-Marokko.",
     when:"Diner op het panoramaterras.",
@@ -460,8 +460,13 @@ function puff(x,y,z){ const d=intro.dust.find(d=>!d.m.visible); if(!d) return; d
    WORLD MAP SCENE
    ================================================================ */
 const world = { scene:new THREE.Scene(), pads:[], marks:[], legMeshes:{}, pick:[] };
-const LM_OFFSET = { aitbenhaddou:[-.26,-.2], ouarzazate:[.16,.24] };
-function lmPos(i){ const s=STAYS[i]; const p=P(s.lat,s.lng); const o=LM_OFFSET[s.id]; if(o){p.x+=o[0];p.z+=o[1];} return p; }
+/* figures of the two stays that sit only ~25 km apart are lifted a little to the side; a pin marks the exact spot */
+const LM_OFFSET = { aitbenhaddou:[-.36,.26], ouarzazate:[.36,.12] };
+const LABEL_SIDES = { wide:{ marrakech:'left', aitbenhaddou:'left', dades:'top', ergchebbi:'top', ouarzazate:'bottom' },
+                      tall:{ marrakech:'top', aitbenhaddou:'bottom', dades:'top', ergchebbi:'topleft', ouarzazate:'right' } };
+const sideOf = id => LABEL_SIDES[innerWidth/innerHeight<.85?'tall':'wide'][id];
+function padPos(i){ const s=STAYS[i]; return P(s.lat,s.lng); }
+function lmPos(i){ const p=padPos(i); const o=LM_OFFSET[STAYS[i].id]; if(o){p.x+=o[0];p.z+=o[1];} return p; }
 const NL_POS = P(NL.lat, NL.lng);
 
 async function buildWorld(){
@@ -521,7 +526,7 @@ async function buildWorld(){
     world.legMeshes[id]=g; });
   // landmarks
   const builders={marrakech:buildKoutoubia, aitbenhaddou:buildKsar, dades:buildDades, ergchebbi:buildErg, ouarzazate:buildOuarz};
-  const scales={marrakech:.17,aitbenhaddou:.22,dades:.2,ergchebbi:.24,ouarzazate:.24};
+  const scales={marrakech:.2,aitbenhaddou:.25,dades:.23,ergchebbi:.27,ouarzazate:.26};
   STAYS.forEach((s,i)=>{
     const root=new THREE.Group(); root.position.copy(lmPos(i)); S.add(root);
     const pad=new THREE.Group(); root.add(pad);
@@ -531,6 +536,12 @@ async function buildWorld(){
     const lm=builders[s.id](); lm.scale.setScalar(scales[s.id]); lm.position.y=.04; root.add(lm);
     root.userData.i=i; lm.traverse(o=>{o.userData.i=i;}); pad.traverse(o=>{o.userData.i=i;});
     world.pads.push(pad); world.marks.push({root,lm,base:scales[s.id]}); world.pick.push(root);
+    if(LM_OFFSET[s.id]){ const a=padPos(i), b=lmPos(i);
+      const pin=new THREE.Group(); pin.position.copy(a); S.add(pin);
+      pin.add(mesh(CYL(.045,.05,.03,24),M('#fff7ea',{r:.5}),0,.015,0,false));
+      pin.add(mesh(SPH(.03,16,12),M('#ff7a3d',{r:.4,e:'#ff7a3d',ei:.3}),0,.045,0,false));
+      const n=Math.max(4,Math.round(a.distanceTo(b)/.06)); for(let k=1;k<n;k++){ const p=a.clone().lerp(b,k/n); pin.add(mesh(SPH(.013,8,6),M('#fff7ea',{r:.5}),p.x-a.x,.02,p.z-a.z,false)); }
+      pin.traverse(o=>o.userData.i=i); world.pick.push(pin); }
   });
   // Netherlands start
   const wm=buildWindmill(); wm.scale.setScalar(.35); wm.position.copy(NL_POS); S.add(wm); world.windmill=wm;
@@ -542,7 +553,7 @@ async function buildWorld(){
 function legCurve(id, lift=.03){
   const leg=LEGS[id]; const pts=leg.path.map(([la,ln])=>P(la,ln,LAND_TOP+lift));
   const ends={aitbenhaddou:[0,1],dades:[1,2],ergchebbi:[2,3],ouarzazate:[3,4],home:[4,0]}[id];
-  const a=lmPos(ends[0]), b=lmPos(ends[1]); pts[0].set(a.x,LAND_TOP+lift,a.z); pts[pts.length-1].set(b.x,LAND_TOP+lift,b.z);
+  const a=padPos(ends[0]), b=padPos(ends[1]); pts[0].set(a.x,LAND_TOP+lift,a.z); pts[pts.length-1].set(b.x,LAND_TOP+lift,b.z);
   return new THREE.CatmullRomCurve3(pts,false,'centripetal');
 }
 
@@ -550,8 +561,13 @@ function legCurve(id, lift=.03){
 const labelEls=[];
 function makeLabels(){
   const box=$('#labels');
-  STAYS.forEach((s,i)=>{ const b=document.createElement('button'); b.className='tag3d'; b.innerHTML=`<b>${i+1}</b><em><span>${s.place}</span><i>${s.n} ${s.n>1?'nachten':'nacht'}</i></em>`;
-    b.addEventListener('click',e=>{e.stopPropagation(); if(mode==='map'&&!busy) jumpTo(i);}); box.appendChild(b); labelEls.push({el:b, pos:()=>lmPos(i).add(new THREE.Vector3(0,.68,0))}); });
+  STAYS.forEach((s,i)=>{ const b=document.createElement('button'); b.className='tag3d'; b.innerHTML=`<b>${i+1}</b><span>${s.place}</span>`;
+    b.addEventListener('click',e=>{e.stopPropagation(); if(mode==='map'&&!busy) jumpTo(i);}); box.appendChild(b);
+    labelEls.push({el:b, get side(){return sideOf(s.id);}, pos:()=>{ const side=sideOf(s.id); const k=world.marks[i]?world.marks[i].root.scale.x:1; const p=lmPos(i);
+      if(side==='top'||side==='topleft') p.y+=.62*k; else if(side==='bottom'){ p.z+=.3*k; } else if(side==='right'){ p.x+=.3*k; p.y+=.15*k; } else { p.x-=.3*k; p.y+=.2*k; } return p; }}); });
+  [['MAROKKO',32.75,-6.3,'geo land big'],['Hoge Atlas',32.3,-6.0,'geo mtn'],['Spanje',37.7,-4.6,'geo land'],['Algerije',32.6,-1.2,'geo land'],
+   ['Atlantische Oceaan',31.6,-11.3,'geo sea'],['Middellandse Zee',36.4,-2.6,'geo sea'],['Sahara',30.05,-4.6,'geo land'],['Nederland',52.9,5.6,'geo land']].forEach(([txt,la,ln,cls])=>{
+    const d=document.createElement('div'); d.className=cls; d.textContent=txt; box.appendChild(d); labelEls.push({el:d,pos:()=>P(la,ln,LAND_TOP),geo:true}); });
   const nl=document.createElement('div'); nl.className='tag3d small nl'; nl.innerHTML='<b>✈</b><span>Nederland</span>'; box.appendChild(nl);
   labelEls.push({el:nl,pos:()=>NL_POS.clone().add(new THREE.Vector3(0,.85,0))});
 }
@@ -560,7 +576,7 @@ function placeLabels(){
   const w=innerWidth,h=innerHeight;
   labelEls.forEach(L=>{ _v.copy(L.pos()).project(camera); const vis=_v.z<1&&Math.abs(_v.x)<1.2&&Math.abs(_v.y)<1.2;
     L.el.style.visibility=vis?'visible':'hidden'; if(!vis) return;
-    L.el.style.transform=`translate(${(_v.x*.5+.5)*w}px,${(-_v.y*.5+.5)*h}px) translate(-50%,-100%)`; });
+    L.el.style.transform=`translate(${(_v.x*.5+.5)*w}px,${(-_v.y*.5+.5)*h}px) ${L.side==='left'?'translate(-100%,-50%)':L.side==='right'?'translate(0,-50%)':L.side==='topleft'?'translate(-82%,-100%)':L.side==='bottom'?'translate(-50%,0)':L.geo?'translate(-50%,-50%)':'translate(-50%,-100%)'}`; });
 }
 function refreshLabelState(){
   labelEls.slice(0,5).forEach((L,i)=>{ L.el.classList.toggle('done',state.visited.has(i)); L.el.classList.toggle('here',state.cur===i&&state.started); });
@@ -572,17 +588,20 @@ function refreshLabelState(){
 /* camera framing on the board */
 function ovr(){
   const asp=innerWidth/innerHeight, portrait=asp<.85;
-  const T=portrait?new THREE.Vector3(-.05,0,.05):new THREE.Vector3(.0,0,.2);
-  const az=portrait?-1.3:0, pol=portrait?.62:.66;
-  const D=portrait?11.5:clamp(7.0/asp+2.0,5.5,9);
-  const dir=new THREE.Vector3(Math.sin(pol)*Math.sin(az), Math.cos(pol), Math.sin(pol)*Math.cos(az));
+  const tan=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  const pol=portrait?.5:.62;
+  const T=portrait?new THREE.Vector3(-.12,0,.05):new THREE.Vector3(.0,0,.1);
+  const halfW=portrait?2.65:3.0;            // keep Marrakech → Erg Chebbi on screen
+  const D=portrait?clamp(halfW/(tan*asp),9,19):clamp(halfW/(tan*asp)*1.15+1.2,5.5,10);
+  const dir=new THREE.Vector3(0, Math.cos(pol), Math.sin(pol));
   return {T, dir, D, pos:T.clone().addScaledVector(dir,D)};
 }
 function closeView(i, d=1.5){
   const o=ovr(); const T=lmPos(i).add(new THREE.Vector3(0,.22,0)); return {pos:T.clone().addScaledVector(o.dir,d), T};
 }
 function updateWorld(dt){
-  const t=clockT;
+  const t=clockT; const fs=innerWidth/innerHeight<.85?1.18:1.05;
+  world.marks.forEach(m=>m.root.scale.setScalar(fs));
   world.pads.forEach((p,i)=>{ const s=1+Math.sin(t*3+i)*.08; p.glow.scale.set(s,s,s); p.glow.material.opacity=.45+Math.sin(t*3+i)*.2; });
   world.marks.forEach((m,i)=>{ m.lm.position.y=.04+Math.max(0,Math.sin(t*2.2+i*1.3))*.03; if(m.lm.palms) m.lm.palms.forEach(pp=>pp.crown.rotation.z=Math.sin(t*1.5+i)*.06);
     if(m.lm.camel){ m.lm.camel.head.rotation.z=Math.sin(t*1.4)*.1; } if(m.lm.clap){ m.lm.clap.rotation.z=Math.max(0,Math.sin(t*2.5))*.45; } });
