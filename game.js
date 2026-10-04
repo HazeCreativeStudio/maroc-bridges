@@ -986,6 +986,7 @@ async function flight(from, to, landing){
   }, E.sine);
 }
 async function arrive(i){
+  Sound.unlock();
   // dive to the landmark, then open the street map
   state.cur=i; refreshLabelState();
   const c=closeView(i,2.0); await camTo(c.pos,c.T,1.4,.3);

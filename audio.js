@@ -22,6 +22,7 @@ function ensure(){
   if(ctx) return ctx;
   if(!AC) return null;
   ctx = new AC();
+  ctx.onstatechange=()=>{ if(ctx.state!=='running'&&started&&!document.hidden) ctx.resume().catch(()=>{}); };
   master = ctx.createGain(); master.gain.value = muted?0:1; master.connect(ctx.destination);
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value=-18; comp.ratio.value=3; comp.connect(master);
   musicBus = ctx.createGain(); musicBus.gain.value = .16; musicBus.connect(comp);
@@ -68,8 +69,9 @@ let unlocked=false, silentEl=null;
 function unlock(){
   if(!ensure()) return;
   try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(_){}
-  if(ctx.state!=='running') ctx.resume();
-  if(unlocked) return; unlocked=true;
+  if(ctx.state!=='running') ctx.resume().catch(()=>{});
+  if(silentEl&&silentEl.paused&&!muted) silentEl.play().catch(()=>{});
+  if(unlocked) return; unlocked=true; loadYallah();
   try{ const b=ctx.createBuffer(1,1,22050), s=ctx.createBufferSource(); s.buffer=b; s.connect(ctx.destination); s.start(0); }catch(_){}
   try{ // a silent looping media element switches iOS to the "playback" audio session (ignores the mute switch)
     silentEl=document.createElement('audio'); silentEl.setAttribute('x-webkit-airplay','deny'); silentEl.loop=true; silentEl.preload='auto';
@@ -95,26 +97,20 @@ function sfx(name){
   else if(name==='close'){ pluck(f(H.Bb,5),t,.2,.4,sfxBus,3500); pluck(f(H.G,5),t+.06,.25,.35,sfxBus,3500); }
   else if(name==='win'){ [0,4,7,12,16,19,24].forEach((n,i)=>pluck(f(H.D+n,4),t+i*.09,.6,.5,sfxBus,5000)); [0,.18,.36,.54].forEach(d=>drum(d%.36?'T':'D',t+d)); }
 }
-/* "yallah yallah": a real Arabic voice when the phone has one, otherwise the bundled clip */
-let clip=null;
-function yallah(){
-  if(muted) return;
-  ensure(); unlock();
-  try{
-    const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
-    const ar=vs.find(v=>/^ar/i.test(v.lang));
-    if(ar){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance('يلا يلا!'); u.voice=ar; u.lang=ar.lang; u.rate=1.05; u.pitch=1.1; u.volume=1; speechSynthesis.speak(u); duck(1.6); return; }
-  }catch(_){}
-  try{ if(!clip){ clip=new Audio('data/yalla.mp3'); clip.preload='auto'; } clip.currentTime=0; clip.volume=1; clip.play().catch(()=>{}); duck(1.6); }catch(_){}
+/* "yallah yallah": played through the same audio engine as the music, so it never steals the phone's audio */
+let yBuf=null, yLoading=null;
+function loadYallah(){ if(yBuf||yLoading||!ensure()) return yLoading; yLoading=fetch('data/yalla.mp3').then(r=>r.arrayBuffer()).then(b=>new Promise((res,rej)=>ctx.decodeAudioData(b,res,rej))).then(buf=>yBuf=buf).catch(()=>null); return yLoading; }
+async function yallah(){
+  if(muted||!ensure()) return; unlock();
+  await loadYallah(); if(!yBuf) return;
+  const s=ctx.createBufferSource(); s.buffer=yBuf; const g=ctx.createGain(); g.gain.value=1.6; s.connect(g); g.connect(sfxBus); s.start(ctx.currentTime+.02); duck(yBuf.duration+.2);
 }
 function duck(sec){ if(!musicBus) return; const t=ctx.currentTime; musicBus.gain.cancelScheduledValues(t); musicBus.gain.setTargetAtTime(.05,t,.05); musicBus.gain.setTargetAtTime(.16,t+sec,.3); }
 function setMuted(m){
   muted=m; try{ localStorage.setItem('mb_muted',m?'1':'0'); }catch(_){}
   if(master) master.gain.setTargetAtTime(m?0:1, ctx.currentTime, .05);
-  if(m&&window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(_){}
   if(!m) startMusic();
   listeners.forEach(fn=>fn(m));
 }
-if(window.speechSynthesis) try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices(); }catch(_){}
 document.addEventListener('visibilitychange',()=>{ if(!ctx) return; if(document.hidden){ ctx.suspend(); if(silentEl) silentEl.pause(); } else if(started){ ctx.resume(); if(silentEl&&!muted) silentEl.play().catch(()=>{}); } });
 export const Sound = { get state(){return ctx?ctx.state:'none'}, get playing(){return started}, unlock, startMusic, sfx, yallah, setMuted, get muted(){return muted}, onChange:fn=>listeners.add(fn) };
