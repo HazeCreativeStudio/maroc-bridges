@@ -28,27 +28,27 @@ const STAYS = [
     photos:["s_marrakech","s_marrakech_2","s_marrakech_3"],
     blurb:"Een kleine riad in het rustigere zuidelijke deel van de medina, een paar steegjes van het Bahia-paleis. De kamers combineren Marokkaans vakwerk met strakke, moderne lijnen. Er is een klein binnenzwembad en het ontbijt wordt op het dakterras geserveerd. Het Jemaa el-Fnaa-plein ligt op zo'n 15 minuten lopen.",
     when:"Ontbijt op het dakterras, 7:00–10:00.",
-    tip:"Vraag de gastheren of ze je de eerste avond terugbrengen. In het donker lijken alle steegjes rond Jnane Ben Chegra op elkaar." },
+    tip:"Ga rond zonsondergang naar het Jemaa el-Fnaa-plein en pak een plekje op het dakterras van Le Grand Balcon du Café Glacier. Je ziet de rook van de eetkraampjes opstijgen, de verhalenvertellers en muzikanten op gang komen en de Koutoubia oplichten." },
   { id:"aitbenhaddou", place:"Aït Benhaddou", stay:"Dar Mouna", nights:"Nacht 3", n:1, z:15, lat:31.062310, lng:-7.126352,
     photos:["s_ait"],
     blurb:"Een familiehuis uit de jaren veertig, gebouwd door de vader van de huidige eigenaar, op 200 meter van de poort van de ksar, aan de overkant van de rivier. Elke kamer kijkt uit op de ksar of het zwembad. Het zwembad wordt gevoed door bronwater, er is een hammam op houtvuur en de groenten komen uit de eigen tuin.",
     when:"Zonsondergang vanaf het terras, met de ksar recht voor je.",
-    tip:"Boek de kookles voor de middag van aankomst en drink daarna thee op het terras terwijl de ksar oplicht." },
+    tip:"Klim vroeg in de ochtend door de steegjes van de ksar naar de oude graanschuur (agadir) helemaal bovenop de heuvel. Voordat de dagjesmensen komen heb je het uitzicht over de rivier en de Ounila-vallei vaak helemaal voor jezelf." },
   { id:"dades", place:"Boumalne Dadès", stay:"Sahara Stars Dades", nights:"Nacht 4–5", n:2, z:15.6, lat:31.362036, lng:-5.911116,
     photos:["s_dades"],
     blurb:"Een hotel in riadstijl in de wijk Jida, aan de rand van Boumalne, op zo'n 13 minuten lopen van het begin van de Dadès-kloof. Buitenzwembad, tuin, terras, een bar-lounge en twee restaurants.",
     when:"Vroeg ontbijt op je kloofdag.",
-    tip:"Vraag op dag 5 om ontbijt om 7:30 en vertrek om 8:30: dan is de weg door de kloof rustig en valt er zacht licht op de rotswanden." },
+    tip:"Rij zo'n 30 km de Dadès-kloof in naar de beroemde haarspeldbochten bij Tissadrine. Drink iets op het terras van Timzzillite, precies boven de bochten, en loop op de terugweg tussen de rode rotsvingers van de Monkey Fingers." },
   { id:"ergchebbi", place:"Erg Chebbi", stay:"Madu Luxury Camp", nights:"Nacht 6", n:1, z:13.5, lat:31.190968, lng:-3.943228,
     photos:["s_erg"],
     blurb:"Het woestijnkamp van Riad Madu bij Hassilabied. Acht Berbertenten tussen de duinen, elk met een king-, queen- of twinbed en een eigen terrasje, ongeveer een uur per kameel vanaf de riad.",
     when:"Inchecken 14:00–16:30, zodat je bij zonsondergang in het zand zit.",
-    tip:"Laat de grote tassen achter bij Riad Madu en neem een zachte overnachtingstas mee. Van november tot maart zijn de nachten koud: vraag om extra dekens." },
+    tip:"Rij naar het dorpje Khamlia, ten zuiden van Merzouga. De families daar stammen af van West-Afrikanen en spelen Gnawa-muziek: trommels, ijzeren castagnetten en zang. Je zit bij een glas thee en luistert mee." },
   { id:"ouarzazate", place:"Ouarzazate", stay:"La Terrasse des Délices", nights:"Nacht 7", n:1, z:15.4, lat:30.918317, lng:-6.963771,
     photos:["s_ouarz"], credit:"Foto ter illustratie: de oase van Fint · Fraguando, CC BY-SA 4.0",
     blurb:"Een auberge in Douar Taharbilte in de oase van Fint, 12 km buiten Ouarzazate. Kleine terrassen en salons, een zwembad en een panoramaterras boven de palmen. De keuken kookt traditionele gerechten uit Zuid-Marokko.",
     when:"Diner op het panoramaterras.",
-    tip:"Kom aan voor het donker. De laatste kilometers naar Fint zijn smal: vraag de auberge om een routebeschrijving of om je in Ouarzazate op te halen." }
+    tip:"Wandel aan het eind van de middag door de palmentuinen van de oase van Fint naar het riviertje, langs moestuintjes en lemen huizen. Klim daarna op de donkere rotsrand en kijk hoe de zon ondergaat boven het groen." }
 ];
 /* legs: key = destination; "home" = back to Marrakech */
 const LEGS = {
@@ -1110,7 +1110,7 @@ function openCard(i){
     <div class="pills"><span>🌙 ${s.nights}</span><span>🛏 ${s.n} ${s.n>1?'nachten':'nacht'}</span></div>
     <p>${s.blurb}</p>
     <div class="box"><b>Beste moment</b><p>${s.when}</p></div>
-    <div class="box"><b>Tip</b><p>${s.tip}</p></div>`;
+    <div class="box"><b>Tip in de buurt</b><p>${s.tip}</p></div>`;
   const gal=$('#gal'); gal.scrollLeft=0; gal.onscroll=()=>{ const j=Math.round(gal.scrollLeft/gal.clientWidth); [...$('#dots').children].forEach((d,k)=>d.classList.toggle('on',k===j)); };
   $('#card').hidden=false; $('#card .card-in').scrollTop=0;
 }
