@@ -880,7 +880,8 @@ function renderIcons(){
   STAYS.forEach(s=>{ const g=builders[s.id](); S.add(g);
     const box=new THREE.Box3().setFromObject(g); const c=box.getCenter(new THREE.Vector3()); const sz=box.getSize(new THREE.Vector3()); const m=Math.max(sz.x,sz.y,sz.z);
     cam.position.set(c.x+m*1.15, c.y+m*.75, c.z+m*1.75); cam.lookAt(c); r.render(S,cam); ICONS[s.id]=r.domElement.toDataURL('image/png'); S.remove(g); });
-  const v=buildVan(); S.add(v); cam.position.set(3.5,2.6,5.2); cam.lookAt(0,.9,0); r.render(S,cam); ICONS.van=r.domElement.toDataURL('image/png');
+  const v=buildVan(); S.add(v); cam.position.set(3.5,2.6,5.2); cam.lookAt(0,.9,0); r.render(S,cam); ICONS.van=r.domElement.toDataURL('image/png'); S.remove(v);
+  const cm=buildCamel(); S.add(cm); cam.position.set(1.4,2.5,7.2); cam.lookAt(.3,1.55,0); r.render(S,cam); ICONS.camel=r.domElement.toDataURL('image/png');
   r.dispose(); r.forceContextLoss?.();
 }
 
@@ -1096,6 +1097,7 @@ async function openLoc(i){
   const el=lmarker.getElement(); el.querySelector('.lm-ico').src=ICONS[s.id]; el.querySelector('.lm-char').src=PORTRAITS[player.id+':full']; el.querySelector('span').textContent=s.stay;
   const hint=el.querySelector('.lm-hint'); hint.hidden=state.visited.has(i)||state.seenCard?.has(i); hint.style.animation='none'; void hint.offsetWidth; hint.style.animation='';
   const chip=$('#chip'); chip.querySelector('img').src=ICONS[s.id]; chip.querySelector('small').textContent=`Level ${i+1} van 5 · ${s.nights}`; chip.querySelector('b').textContent=s.place;
+  $('#infoCamel img').src=ICONS.camel; const ic=$('#infoCamel'); ic.style.animation='none'; void ic.offsetWidth; ic.style.animation='';
   const last=i===STAYS.length-1;
   $('#next span').textContent=last?'Op naar huis':'Op naar de volgende locatie';
   $('#next small').textContent=last?'→ Marrakech ✈ Nederland':`→ ${STAYS[i+1].place}`;
@@ -1103,7 +1105,47 @@ async function openLoc(i){
   await iris(false);
   lmap.flyTo({center:[s.lng,s.lat],zoom:s.z||16.2,pitch:58,bearing:-22,duration:2600,essential:true,curve:1.2});
 }
+
+/* "Meer informatie?": short background about each place (not the hotels) */
+const INFO = {
+  marrakech:{ title:"Marrakech, de rode stad", facts:[
+    "Marrakech werd rond 1070 gesticht door de Almoraviden, een Berberdynastie uit de Sahara. De stad was eeuwenlang hoofdstad, en de naam Marokko is er zelfs van afgeleid.",
+    "De Koutoubia-minaret (ongeveer 77 meter) werd in de 12e eeuw gebouwd onder de Almohaden. Hij stond model voor de Giralda in Sevilla.",
+    "De oude medina staat sinds 1985 op de UNESCO-werelderfgoedlijst. Het Jemaa el-Fnaa-plein, met zijn verhalenvertellers, muzikanten en eetkraampjes, was een van de redenen om immaterieel erfgoed als categorie op te nemen.",
+    "De kleur komt van de rode aarde waarmee de stadsmuren en huizen gebouwd zijn: zo'n 19 kilometer muur omringt de medina." ]},
+  aitbenhaddou:{ title:"Aït Benhaddou, de filmksar", facts:[
+    "Een ksar is een versterkt dorp van leem en stro. Aït Benhaddou lag aan de oude karavaanroute tussen de Sahara en Marrakech, waarover zout, goud, dadels en andere handelswaar werden vervoerd.",
+    "De meeste gebouwen die je nu ziet, stammen uit de 17e eeuw en later. Leem moet steeds opnieuw worden bijgewerkt, dus het dorp wordt eigenlijk voortdurend herbouwd.",
+    "Sinds 1987 staat het op de UNESCO-werelderfgoedlijst.",
+    "Het is een geliefde filmlocatie: onder meer Lawrence of Arabia, Gladiator en Game of Thrones werden hier opgenomen." ]},
+  dades:{ title:"De Dadès-vallei", facts:[
+    "De rivier de Dadès ontspringt in de Hoge Atlas en snijdt hier een kloof door rode rotsen. Verderop stroomt ze samen met andere rivieren in het stuwmeer bij Ouarzazate en voedt ze zo de Draa-vallei.",
+    "De weg tussen Ouarzazate en Errachidia heet de Route van de Duizend Kasbahs: langs de rivier liggen talloze lemen burchten van Amazigh-families (Berbers), die vroeger de oases en waterrechten bewaakten.",
+    "De vreemd afgeronde rotsen, de Monkey Fingers, zijn gevormd door miljoenen jaren erosie van conglomeraatgesteente.",
+    "Vlakbij ligt Kelaat M'Gouna, de rozenhoofdstad van Marokko. Volgens de overlevering namen pelgrims de damascusroos ooit mee uit het Midden-Oosten; in mei wordt er een rozenfestival gehouden." ]},
+  ergchebbi:{ title:"Erg Chebbi, de Sahara", facts:[
+    "Een erg is een zandzee. Erg Chebbi is ongeveer 22 kilometer lang en heeft duinen tot zo'n 150 meter hoog, vlak bij de grens met Algerije.",
+    "Het zand kleurt van goudgeel tot dieporanje, afhankelijk van het licht: vooral bij zonsopkomst en zonsondergang.",
+    "Iets noordelijker lag Sijilmasa, in de Middeleeuwen een van de belangrijkste karavaansteden van Noord-Afrika, waar goud uit West-Afrika binnenkwam. Uit deze streek, de Tafilalt, komt ook de huidige koninklijke familie van Marokko, de Alaouieten.",
+    "De woestijn was ooit zee: in de rotsen rond Erfoud en Merzouga vind je veel fossielen, zoals trilobieten en ammonieten van honderden miljoenen jaren oud." ]},
+  ouarzazate:{ title:"Ouarzazate, de poort van de woestijn", facts:[
+    "Ouarzazate wordt de poort van de woestijn genoemd: hier komen de wegen uit de Hoge Atlas, de Draa-vallei en de Dadès-vallei samen.",
+    "De moderne stad ontstond rond 1928 als Franse garnizoensplaats. Daarvoor draaide alles om de Kasbah Taourirt, een machtsbasis van de familie Glaoui, die in de vroege 20e eeuw grote delen van Zuid-Marokko beheerste.",
+    "Door de vele filmstudio's krijgt de stad de bijnaam Ouallywood: films en series als Gladiator, Kingdom of Heaven en Game of Thrones werden hier en in de omgeving opgenomen.",
+    "Net buiten de stad ligt Noor Ouarzazate, een van de grootste zonne-energiecentrales ter wereld, met honderdduizenden spiegels in de woestijn." ]}
+};
+function openInfo(i){
+  Sound.sfx('open');
+  const s=STAYS[i], d=INFO[s.id];
+  $('#card').classList.add('info');
+  $('#gal').innerHTML=''; $('#dots').innerHTML=''; $('#credit').textContent='';
+  $('#cardBody').innerHTML=`<div class="info-head"><img src="${ICONS.camel}" alt=""><div><p class="kick">Level ${i+1} · Wist je dat?</p><h2>${d.title}</h2></div></div>`+
+    d.facts.map(f=>`<p class="fact">${f}</p>`).join('');
+  $('#card').hidden=false; $('#card .card-in').scrollTop=0;
+}
+
 function openCard(i){
+  $('#card').classList.remove('info');
   Sound.sfx('open');
   const s=STAYS[i]; (state.seenCard||(state.seenCard=new Set())).add(i);
   lmarker.getElement().querySelector('.lm-hint').hidden=true;
@@ -1184,6 +1226,7 @@ $('#start').addEventListener('click',()=>{ if(mode!=='map'||busy) return; if(!st
 $('#toMap').addEventListener('click',()=>{ if(mode==='loc'&&!busy) backToMap(); });
 $('#next').addEventListener('click',()=>{ if(mode==='loc'&&!busy) driveNext(); });
 
+$('#infoCamel').addEventListener('click',()=>{ if(mode==='loc'&&!busy) openInfo(state.cur); });
 $('#cardX').addEventListener('click',()=>{ $('#card').hidden=true; Sound.sfx('close'); });
 $('#card').addEventListener('click',e=>{ if(e.target.id==='card') $('#card').hidden=true; });
 $('#again').addEventListener('click',async()=>{ $('#end').hidden=true; state.visited.clear(); state.started=false; state.cur=0; world.plane.visible=false; mode='map'; busy=true; refreshLabelState(); setStartLabel(); showHud(true); const o=ovr(); await camTo(o.pos,o.T,2.2,1.5); busy=false; });

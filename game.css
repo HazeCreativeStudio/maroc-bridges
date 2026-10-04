@@ -219,3 +219,19 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .sound.muted{background:#e9dccb}
 .loc-top{padding-right:70px}
 #banner{max-width:calc(100vw - 132px)}
+
+/* camel with "meer informatie?" */
+.info-camel{position:absolute;left:8px;bottom:calc(var(--safe-b) + 168px);z-index:2;display:flex;align-items:flex-end;flex-direction:row-reverse;gap:0;animation:camelIn .7s .6s cubic-bezier(.3,1.5,.5,1) both}
+.info-camel img{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 5px 5px rgba(40,15,0,.35));animation:camelBob 2.4s ease-in-out infinite;transform-origin:50% 100%}
+.info-camel .bubble{position:relative;align-self:flex-start;margin:0 0 0 -14px;padding:7px 12px;border-radius:16px;background:var(--cream);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink-2);font:400 15px/1.1 var(--game);color:var(--ink);white-space:nowrap;order:-1}
+.info-camel .bubble::before{content:"";position:absolute;left:-11px;bottom:6px;border:7px solid transparent;border-right-color:var(--ink);border-left:0}
+.info-camel:active img{transform:scale(.92)}
+@keyframes camelIn{from{opacity:0;transform:translateX(-120%)}to{opacity:1;transform:none}}
+@keyframes camelBob{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) translateY(-4px)}}
+#card.info .gal-wrap,#card.info .credit{display:none}
+#card.info .x{top:14px;right:14px}
+.info-head{display:flex;align-items:center;gap:10px;margin:2px 44px 8px 0}
+.info-head img{width:70px;height:70px;object-fit:contain;flex:none;border-radius:50%;background:var(--sand);border:3px solid var(--ink)}
+.info-head h2{margin:2px 0 0!important;font-size:25px!important}
+.card-body .fact{position:relative;padding-left:26px}
+.card-body .fact::before{content:"★";position:absolute;left:2px;top:0;color:var(--orange);font-size:16px}
