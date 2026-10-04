@@ -385,7 +385,9 @@ const CHARACTERS = [
   { id:"bas", name:"Bas", robe:"#1f9e6a", trim:"#f2c14e", skin:"#eab99b", hair:"buzz", hairColor:"#857e76",
     brows:"#8f877d", eyes:"#6f8aa6", mouth:"open", grin:1.18, gap:true, beard:"stubble", beardColor:"#a2988c", collar:"#1f2a44", robeName:"Smaragdgroene djellaba" },
   { id:"inge", name:"Inge", robe:"#f0a51e", trim:"#a8322d", skin:"#f3c9a9", hair:"long", hairColor:"#c39554",
-    brows:"#a8865a", eyes:"#5f8a8f", lashes:true, mouth:"open", freckles:true, earrings:"#e2a93a", collar:"#ffffff", robeName:"Saffraangele djellaba" }
+    brows:"#a8865a", eyes:"#5f8a8f", lashes:true, mouth:"open", freckles:true, earrings:"#e2a93a", collar:"#ffffff", robeName:"Saffraangele djellaba" },
+  { id:"sem", name:"Sem", robe:"#9e2a3a", trim:"#f2c14e", skin:"#f2c4a4", hair:"sweep", hairColor:"#8a6844", hairLight:"#b9935d",
+    brows:"#7a5b3c", eyes:"#62788f", mouth:"open", grin:1.1, collar:"#7d1f2c", scale:.86, pose:"thumbs", robeName:"Bordeauxrode djellaba" }
 ];
 const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
 
@@ -414,7 +416,9 @@ function buildCharacter(c){
     const sl=mesh(new THREE.CapsuleGeometry(.12,.38,6,14),robe,0,-.24,0); arm.add(sl);
     arm.add(mesh(CYL(.17,.13,.14,18),robeD,0,-.48,0));
     arm.add(mesh(SPH(.105,16,12),skin,0,-.6,0));
-    arm.rotation.z=s*.32; }
+    arm.rotation.z=s*.32;
+    if(c.pose==='thumbs'&&s>0){ const th=mesh(new THREE.CapsuleGeometry(.035,.07,4,8),skin,0,-.6,0); const d=new THREE.Vector2(Math.sin(1.9),Math.cos(1.9)); th.position.set(d.x*.11,-.6+d.y*.11,.02); th.rotation.z=-1.9; arm.add(th); } }
+  g.pose=c.pose;
   // babouches peeking out
   for(const s of [-1,1]){ const b=ell(.11,.07,.2,M('#f4c430',{r:.55}),s*.17,.05,.42); g.add(b); }
   // head
@@ -457,6 +461,14 @@ function buildCharacter(c){
     head.add(shell(Math.PI/2+.75,Math.PI*2-1.5,.5,1.05,1.03));
     for(let k=0;k<30;k++){ const th=.1+Math.random()*.58, ph=Math.random()*Math.PI*2; if(Math.sin(ph)>.2&&th>.42) continue;
       const tf=mesh(SPH(.05,8,6),hm,.515*Math.sin(th)*Math.cos(ph),.49*Math.cos(th)+.01,.48*Math.sin(th)*Math.sin(ph)); tf.scale.set(1,.55,1); head.add(tf); } }
+  else if(c.hair==='sweep'){
+    const hl=M(c.hairLight||c.hairColor,{r:.8});
+    head.add(shell(0,Math.PI*2,0,.95,1.06));
+    head.add(shell(Math.PI/2+.75,Math.PI*2-1.5,.7,.85,1.06));
+    const f1=ell(.4,.12,.22,hm,.06,.33,.3); f1.rotation.z=-.38; f1.rotation.x=-.55; head.add(f1);
+    const f2=ell(.26,.09,.16,hl,.2,.3,.36); f2.rotation.z=-.62; f2.rotation.x=-.45; head.add(f2);
+    const f3=ell(.2,.08,.14,hl,-.12,.42,.24); f3.rotation.z=-.2; f3.rotation.x=-.6; head.add(f3);
+    [[-.25,.45,-.05,.5],[.15,.5,-.1,-.3],[.0,.52,.08,.1]].forEach(([x,y,z,r])=>{ const tf=ell(.18,.08,.15,hm,x,y,z); tf.rotation.z=r; head.add(tf); }); }
   else if(c.hair==='short'){ head.add(shell(0,Math.PI*2,0,1.15)); }
   else if(c.hair==='long'){
     head.add(shell(0,Math.PI*2,0,.8,1.06));
@@ -476,6 +488,7 @@ function buildCharacter(c){
       const tc=new THREE.CatmullRomCurve3([new THREE.Vector3(s*.3,.07,.49),new THREE.Vector3(s*.43,.08,.34),new THREE.Vector3(s*.5,.07,.04)]);
       head.add(mesh(new THREE.TubeGeometry(tc,12,.012,6),gm)); }
     const br=mesh(CYL(.012,.012,.1,6),gm,0,.08,.5); br.rotation.z=Math.PI/2; head.add(br); }
+  g.userData.base=c.scale||1; g.scale.setScalar(g.userData.base);
   return g;
 }
 
@@ -515,12 +528,12 @@ function updatePick(dt){
   pick.t+=dt; const t=pick.t;
   const asp=innerWidth/innerHeight; const dist=asp<1?9.6:6.2;
   camera.position.set(Math.sin(.15)*dist, 2.6, Math.cos(.15)*dist); camTgt.set(0,asp<1?.55:.95,0); look();
-  pick.pop=Math.min(1,pick.pop+dt*1.8); const s=E.back(pick.pop); if(pick.model){ pick.model.scale.set(s*(1+Math.sin(t*2.4)*.012), s*(1-Math.sin(t*2.4)*.012), s);
+  pick.pop=Math.min(1,pick.pop+dt*1.8); const s=E.back(pick.pop)*(pick.model?pick.model.userData.base:1); if(pick.model){ pick.model.scale.set(s*(1+Math.sin(t*2.4)*.012), s*(1-Math.sin(t*2.4)*.012), s);
     pick.model.rotation.y=Math.sin(t*.6)*.45; animChar(pick.model,t,true); }
   if(pick.palm) pick.palm.crown.rotation.z=Math.sin(t*1.3)*.05;
 }
 function animChar(m,t,wave){
-  if(m.arms){ if(wave){ m.arms[1].rotation.z=2.5+Math.sin(t*7)*.32; m.arms[1].rotation.x=.15; } m.arms[0].rotation.z=-.32+Math.sin(t*1.8)*.04; }
+  if(m.arms){ if(wave&&m.pose==='thumbs'){ m.arms[1].rotation.z=1.9+Math.sin(t*5)*.07; m.arms[1].rotation.x=-.35; } else if(wave){ m.arms[1].rotation.z=2.5+Math.sin(t*7)*.32; m.arms[1].rotation.x=.15; } m.arms[0].rotation.z=-.32+Math.sin(t*1.8)*.04; }
   if(m.head){ m.head.rotation.z=Math.sin(t*1.6)*.06; m.head.rotation.y=Math.sin(t*.9)*.12; }
   const bl=(t%3.8)>3.66; m.lids.forEach(l=>l.scale.y=bl?1:.01);
 }
@@ -831,7 +844,7 @@ function choosePlayer(id){
   setPickModel(player);
 }
 function buildPicker(){
-  const g=$('#pickGrid');
+  const g=$('#pickGrid'); g.classList.toggle('many',CHARACTERS.length>8);
   g.innerHTML=CHARACTERS.map(c=>`<button class="pick-card" data-id="${c.id}" style="--c:${shade(c.robe,.3)}"><i class="av"><img src="${PORTRAITS[c.id]}" alt=""></i><span>${c.name}</span></button>`).join('');
   g.querySelectorAll('.pick-card').forEach(b=>b.addEventListener('click',()=>choosePlayer(b.dataset.id)));
   let saved=null; try{ saved=localStorage.getItem('mb_player'); }catch(_){}
