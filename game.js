@@ -397,7 +397,9 @@ const CHARACTERS = [
   { id:"liesbeth", name:"Liesbeth", robe:"#119fbf", trim:"#f2c14e", skin:"#e4aa86", hair:"messybun", hairColor:"#4a3022",
     brows:"#3d281c", eyes:"#5a4130", lashes:true, squint:true, mouth:"open", grin:1.15, collar:"#3aa86b", robeName:"Turquoise djellaba" },
   { id:"saar", name:"Saar", robe:"#f09bbd", trim:"#f2c14e", skin:"#f2c2a2", hair:"wavy", hairColor:"#8a5d3b", hairLight:"#c49562",
-    brows:"#6d4a30", eyes:"#5a3d28", lashes:true, mouth:"open", braces:true, earrings:"#d9dde2", hoopSize:1.7, sunnies:true, collar:"#f7d3e2", scale:.82, robeName:"Poederroze djellaba" }
+    brows:"#6d4a30", eyes:"#5a3d28", lashes:true, mouth:"open", braces:true, earrings:"#d9dde2", hoopSize:1.7, sunnies:true, collar:"#f7d3e2", scale:.82, robeName:"Poederroze djellaba" },
+  { id:"nova", name:"Nova", robe:"#6b2a63", trim:"#f2c14e", skin:"#ecb58f", hair:"ponytail", sleek:true, hairColor:"#a27b4e",
+    brows:"#8a6845", eyes:"#6a8199", lashes:true, smile:.8, smirk:.1, necklace:"#e6c25a", lips:"#c8505c", collar:"#4a1c44", scale:.88, robeName:"Aubergine djellaba" }
 ];
 const shade=(hex,amt)=>{ const c=new THREE.Color(hex); const h={}; c.getHSL(h); c.setHSL(h.h,h.s,clamp(h.l+amt,0,1)); return '#'+c.getHexString(); };
 
@@ -417,6 +419,7 @@ function buildCharacter(c){
   // hood hanging at the back
   const hood=ell(.3,.3,.17,robeD,0,1.06,-.33); g.add(hood);
   ad(g,mesh(new THREE.TorusGeometry(.2,.02,6,24,Math.PI),trim,0,1.12,-.43)).rotation.z=Math.PI;
+  if(c.necklace){ const nk=mesh(new THREE.TorusGeometry(.17,.022,8,32),M(c.necklace,{m:.85,r:.3}),0,1.26,.02); nk.rotation.x=Math.PI/2-.25; g.add(nk); g.add(mesh(SPH(.04,10,8),M(c.necklace,{m:.85,r:.3}),0,1.19,.2)); }
   // neck and shirt collar
   g.add(mesh(CYL(.13,.15,.16,16),skin,0,1.3,0));
   for(const s of [-1,1]){ const col=mesh(RB(.16,.05,.11,.02,1),M(c.collar||'#ffffff',{r:.4}),s*.09,1.27,.13); col.rotation.z=s*.55; col.rotation.y=-s*.4; g.add(col); }
@@ -453,7 +456,7 @@ function buildCharacter(c){
     if(c.braces){ mouth.add(mesh(new THREE.PlaneGeometry(.17,.012),M('#c9ced6',{m:.8,r:.25,ds:true}),0,-.022,.008)); for(let k=-3;k<=3;k++) mouth.add(mesh(new THREE.PlaneGeometry(.014,.018),M('#aeb5bf',{m:.8,r:.25,ds:true}),k*.026,-.022,.009)); }
     if(c.gap) mouth.add(mesh(new THREE.PlaneGeometry(.008,.05),M('#5a1e18',{ds:true}),0,-.03,.007));
     head.remove(mo); }
-  else { const arc=Math.PI*.7*(c.smile??.9); const sm=mesh(new THREE.TorusGeometry(.12,.022,8,24,arc),M('#7a2f22',{r:.5}),0,-.2,.44); sm.rotation.z=Math.PI*1.5-arc/2+(c.smirk||0); sm.rotation.x=-.25; if(c.beard) sm.position.z=.47; head.add(sm); }
+  else { const arc=Math.PI*.7*(c.smile??.9); const sm=mesh(new THREE.TorusGeometry(.12,c.lips?.03:.022,8,24,arc),M(c.lips||'#7a2f22',{r:.5}),0,-.2,.44); sm.rotation.z=Math.PI*1.5-arc/2+(c.smirk||0); sm.rotation.x=-.25; if(c.beard) sm.position.z=.47; head.add(sm); }
   if(c.freckles){ const fm=M(shade(c.skin,-.22),{r:.7}); const nf=c.freckles==='many'?16:7; for(const s of [-1,1]) for(let k=0;k<nf;k++){ const x=s*(.1+((k*37)%11)/11*.24), y=-.03-((k*53)%13)/13*.13; head.add(mesh(SPH(.011,6,5),fm,x,y,Math.sqrt(Math.max(.01,1-(x/.5)**2-(y/.48)**2))*.47+.003)); }
     for(let k=0;k<(c.freckles==='many'?8:4);k++) head.add(mesh(SPH(.009,6,5),fm,-.05+(k%4)*.033,.0+(k>3?.04:0)+(k%2)*.015,.53)); }
   if(c.earrings&&c.earStud){ const em=M(c.earrings,{m:.85,r:.25}); for(const s of [-1,1]) head.add(mesh(SPH(.024,10,8),em,s*.5,-.11,.03)); }
@@ -482,10 +485,14 @@ function buildCharacter(c){
     const f3=ell(.2,.08,.14,hl,-.12,.42,.24); f3.rotation.z=-.2; f3.rotation.x=-.6; head.add(f3);
     [[-.25,.45,-.05,.5],[.15,.5,-.1,-.3],[.0,.52,.08,.1]].forEach(([x,y,z,r])=>{ const tf=ell(.18,.08,.15,hm,x,y,z); tf.rotation.z=r; head.add(tf); }); }
   else if(c.hair==='ponytail'){
-    head.add(shell(0,Math.PI*2,0,.92,1.05));
-    head.add(shell(Math.PI/2+.95,Math.PI*2-1.9,.6,.62,1.055));
-    for(const s of [-1,1]){ const w=ell(.26,.08,.18,hm,s*.2,.36,.3); w.rotation.z=-s*.35; w.rotation.x=-.5; head.add(w);
-      const st=mesh(new THREE.CapsuleGeometry(.035,.32,4,8),hm,s*.44,-.08,.18); st.rotation.z=s*.12; head.add(st); }
+    if(!c.sleek){ head.add(shell(0,Math.PI*2,0,.92,1.05)); head.add(shell(Math.PI/2+.95,Math.PI*2-1.9,.6,.62,1.055)); }
+    for(const s of [-1,1]){ const w=ell(.26,.08,.18,hm,s*.2,.36,.3); w.rotation.z=-s*.35; w.rotation.x=-.5; if(!c.sleek) head.add(w);
+      const st=mesh(new THREE.CapsuleGeometry(.035,.32,4,8),hm,s*.44,-.08,.18); st.rotation.z=s*.12; if(!c.sleek) head.add(st); }
+    if(c.sleek){ head.add(shell(0,Math.PI*2,0,.84,1.045));
+      for(const s of [-1,1]){ const w=ell(.24,.07,.17,hm,s*.19,.4,.26); w.rotation.z=-s*.5; w.rotation.x=-.62; head.add(w); }
+      head.add(shell(Math.PI*1.5-1.3,2.6,.5,.85,1.05));
+      head.add(shell(Math.PI/2+1.25,Math.PI*2-2.5,.6,.55,1.05));
+      const pt3=ell(.12,.3,.12,hm,.3,-.45,-.42); pt3.rotation.z=-.3; pt3.rotation.x=.3; head.add(pt3); }
     head.add(mesh(new THREE.TorusGeometry(.07,.03,8,18),M('#e05a8a',{r:.5}),0,.22,-.5));
     const pt=ell(.15,.36,.14,hm,0,-.12,-.6); pt.rotation.x=.35; head.add(pt);
     const pt2=ell(.1,.2,.1,hm,0,-.42,-.55); pt2.rotation.x=-.2; head.add(pt2); }
