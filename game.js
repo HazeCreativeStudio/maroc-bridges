@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {RoundedBoxGeometry} from './lib/RoundedBoxGeometry.js';
 import {RoomEnvironment} from './lib/RoomEnvironment.js';
 import {Sound} from './audio.js';
+import {QUIZ} from './quiz.js';
 
 /* =====================================================================
    MAROC BRIDGES: the game
@@ -1149,7 +1150,7 @@ const INFO = {
     "Net buiten de stad ligt Noor Ouarzazate, een van de grootste zonne-energiecentrales ter wereld, met honderdduizenden spiegels in de woestijn." ]}
 };
 function openInfo(i){
-  Sound.sfx('open');
+  Sound.sfx('open'); $('#card').classList.remove('quiz');
   const s=STAYS[i], d=INFO[s.id];
   $('#card').classList.add('info');
   $('#gal').innerHTML=''; $('#dots').innerHTML=''; $('#credit').textContent='';
@@ -1158,8 +1159,55 @@ function openInfo(i){
   $('#card').hidden=false; $('#card .card-in').scrollTop=0;
 }
 
+/* ---------- quiz per place ---------- */
+let qz=null;
+function openQuiz(i){
+  Sound.sfx('open');
+  const s=STAYS[i]; const qs=QUIZ[s.id];
+  qz={i, qs, n:0, score:0, tries:0};
+  $('#card').classList.add('info','quiz'); $('#gal').innerHTML=''; $('#dots').innerHTML=''; $('#credit').textContent='';
+  $('#card').hidden=false; renderQ();
+}
+function renderQ(){
+  const {i,qs,n}=qz, q=qs[n], s=STAYS[i];
+  const ord=[0,1,2,3].slice(0,q.a.length); for(let j=ord.length-1;j>0;j--){ const r=Math.floor(Math.random()*(j+1)); [ord[j],ord[r]]=[ord[r],ord[j]]; } qz.ord=ord;
+  $('#cardBody').innerHTML=`<div class="quiz-top"><p class="kick">Quiz · ${s.place}</p><span class="quiz-score">⭐ ${qz.score}</span></div>
+    <div class="quiz-bar"><i style="width:${n/qs.length*100}%"></i></div>
+    <p class="quiz-count">Vraag ${n+1} van ${qs.length}</p>
+    <h2 class="quiz-q">${q.q}</h2>
+    <div class="quiz-opts">${ord.map((o,k)=>`<button class="quiz-opt" data-k="${o}"><b>${'ABCD'[k]}</b><span>${q.a[o]}</span></button>`).join('')}</div>
+    <div class="quiz-fb" hidden></div>`;
+  $('#cardBody').querySelectorAll('.quiz-opt').forEach(b=>b.addEventListener('click',()=>answerQ(+b.dataset.k)));
+  $('#card .card-in').scrollTop=0;
+}
+function answerQ(k){
+  const q=qz.qs[qz.n], ok=k===q.c;
+  if(ok&&qz.tries===0) qz.score++;
+  qz.tries++;
+  $('#cardBody').querySelectorAll('.quiz-opt').forEach(b=>{ const j=+b.dataset.k; b.disabled=true; if(j===q.c) b.classList.add('right'); else if(j===k) b.classList.add('wrong'); else b.classList.add('dim'); });
+  Sound.sfx(ok?'arrive':'close');
+  const last=qz.n===qz.qs.length-1;
+  const fb=$('#cardBody .quiz-fb'); fb.hidden=false; fb.className='quiz-fb '+(ok?'ok':'no');
+  fb.innerHTML=`<p class="quiz-verdict">${ok?'Goed zo!':'Helaas, niet goed.'} Het juiste antwoord is <b>${q.a[q.c]}</b>.</p><p>${q.e}</p>
+    <div class="quiz-actions"><button class="btn small ghost" id="qAgain"><span>Nog een keer</span></button><button class="btn small" id="qNext"><span>${last?'Bekijk je score':'Volgende vraag'}</span></button></div>`;
+  $('#qAgain').addEventListener('click',()=>{ Sound.sfx('tap'); renderQ(); });
+  $('#qNext').addEventListener('click',()=>{ Sound.sfx('tap'); qz.n++; qz.tries=0; if(qz.n>=qz.qs.length) quizDone(); else renderQ(); });
+  setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
+}
+function quizDone(){
+  const {score,qs,i}=qz, pct=score/qs.length;
+  const stars=pct>=.9?3:pct>=.6?2:pct>=.3?1:0;
+  const msg=stars===3?'Je bent een echte Marokko-kenner!':stars===2?'Mooi gedaan, je weet er al veel van.':stars===1?'Een goed begin: je hebt veel nieuws geleerd.':'Nu weet je in ieder geval een heleboel nieuwe dingen!';
+  $('#cardBody').innerHTML=`<div class="quiz-end"><div class="stars">${[0,1,2].map(k=>`<i class="${k<stars?'':'off'}">★</i>`).join('')}</div>
+    <h2>${score} van de ${qs.length} goed</h2><p>${msg}</p><p class="quiz-note">Alleen antwoorden die je in één keer goed had, tellen mee.</p>
+    <div class="quiz-actions"><button class="btn small ghost" id="qRestart"><span>Quiz opnieuw</span></button><button class="btn small" id="qClose"><span>Klaar</span></button></div></div>`;
+  if(stars>=2){ confetti(60); Sound.sfx('win'); } else Sound.sfx('open');
+  $('#qRestart').addEventListener('click',()=>openQuiz(i));
+  $('#qClose').addEventListener('click',()=>{ $('#card').hidden=true; });
+}
+
 function openCard(i){
-  $('#card').classList.remove('info');
+  $('#card').classList.remove('info','quiz');
   Sound.sfx('open');
   const s=STAYS[i]; (state.seenCard||(state.seenCard=new Set())).add(i);
   lmarker.getElement().querySelector('.lm-hint').hidden=true;
@@ -1227,7 +1275,7 @@ function tapAt(x,y){
 $('#intro').addEventListener('click',()=>{ if(mode==='intro'&&intro.t>.6) goMapFromIntro(); });
 $('#pickGo').addEventListener('click',startFromPick);
 /* sound: music starts on the first touch; soft tap on ordinary buttons; a toggle for those who want silence */
-const SPECIAL=new Set(['pickGo','start','next','cardX','sound']);
+const SPECIAL=new Set(['pickGo','start','next','cardX','sound','quizBtn','qAgain','qNext','qRestart','qClose']);
 /* iOS only unlocks audio on touchend/click, not pointerdown */
 ['touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ if(!Sound.muted) Sound.startMusic(); },{capture:true,passive:true}));
 document.addEventListener('pointerdown',e=>{ if(!Sound.muted) Sound.startMusic(); const b=e.target.closest&&e.target.closest('button,a.btn,.tag3d');
@@ -1240,6 +1288,7 @@ $('#start').addEventListener('click',()=>{ if(mode!=='map'||busy) return; if(!st
 $('#toMap').addEventListener('click',()=>{ if(mode==='loc'&&!busy) backToMap(); });
 $('#next').addEventListener('click',()=>{ if(mode==='loc'&&!busy) driveNext(); });
 
+$('#quizBtn').addEventListener('click',()=>{ if(mode==='loc'&&!busy) openQuiz(state.cur); });
 $('#infoCamel').addEventListener('click',()=>{ if(mode==='loc'&&!busy) openInfo(state.cur); });
 $('#cardX').addEventListener('click',()=>{ $('#card').hidden=true; Sound.sfx('close'); });
 $('#card').addEventListener('click',e=>{ if(e.target.id==='card') $('#card').hidden=true; });
